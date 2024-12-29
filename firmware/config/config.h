@@ -36,9 +36,11 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+#define CONFIG_OS_IS_FREERTOS
+
 /* Tasks */
-#define CONFIG_TASK_HEARTBEAT_ENABLED                   1
-#define CONFIG_STARTUP_ENABLED                          1
+#define CONFIG_TASK_HEARTBEAT_ENABLED 1
+#define CONFIG_STARTUP_ENABLED 1
 
 #endif /* CONFIG_H_ */
 
