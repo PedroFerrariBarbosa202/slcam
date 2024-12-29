@@ -37,16 +37,24 @@
 #define ERRNO_H
 
 /* No error ocurred */
-#define ERRNO_SUCCESS                        0x00U       /** No errors found */
+#define ERRNO_SUCCESS 0x00U /** No errors found */
 
 /* Driver Level errors */
-#define ERRNO_DRIVER_NO_PORT                 0x11U       /** No port found */
-#define ERRNO_DRIVER_NO_PARAMETER            0x12U       /** Invalid parameter value */
-#define ERRNO_DRIVER_FAILED                  0x13U       /** Failed to execute HAL function */             
+#define ERRNO_DRIVER_NO_PORT 0x11U /** No port found */
+#define ERRNO_DRIVER_NO_PARAMETER 0x12U /** Invalid parameter value */
+#define ERRNO_DRIVER_FAILED 0x13U /** Failed to execute HAL function */
+#define ERRNO_DRIVER_UNINITIALIZED 0x14U /** Driver was not yet initialized */
 
 /* Device Level errors */
-#define ERRNO_DEVICE_FAILED_CONFIG           0x21U       /** Failed to configure driver */
-#define ERRNO_DEVICE_FAILED_COM              0x22U       /** Failed to communicate */
+#define ERRNO_DEVICE_FAILED_CONFIG 0x21U /** Failed to configure driver */
+#define ERRNO_DEVICE_FAILED_COM 0x22U /** Failed to communicate */
+
+/* Miscellaneous errors */
+#define ERRNO_MISC_INVALID_ARG 0x81U /** Invalid argument passed to function */
+#define ERRNO_MISC_FAILED_ALLOC 0x82U /** Failed to allocate memory */
+#define ERRNO_MISC_UNSUPPORTED_OP 0x83U /** Unsupported operation */
+#define ERRNO_MISC_UNKNOWN 0x84U /** Unknown error occured */
+#define ERRNO_MISC_TIMEOUT 0x85U /** Operation timeout */
 
 #endif /*ERRNO_H */
 
