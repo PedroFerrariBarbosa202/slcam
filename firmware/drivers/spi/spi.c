@@ -33,48 +33,205 @@
  * \{
  */
 
+#include <stdint.h>
+#include <config/errno.h>
+#include <utils/mutex/mutex.h>
 
 #include "spi.h"
 
-int spi_select_slave(spi_port_t port, spi_cs_t cs, bool active)
+int spi_init_controller(struct spi_controller *controller,
+			struct spi_config *config, enum spi_port port)
 {
-    return -1;
+	struct spi_driver_api *api;
+	int err;
+
+	if (!config || !controller)
+		return -ERRNO_MISC_INVALID_ARG;
+
+	if (controller->initialized == 1)
+		return 0;
+
+	api = spi_hw_get_driver();
+
+	if (!api)
+		return -ERRNO_MISC_UNSUPPORTED_OP;
+
+	err = mutex_init(&controller->lock);
+
+	if (err < 0)
+		return err;
+
+	err = api->init(controller, config, port);
+
+	if (err < 0)
+		return err;
+
+	controller->port = port;
+	controller->api = api;
+	controller->config = *config;
+	controller->initialized = 1U;
+
+	return 0;
 }
 
-int spi_init(spi_port_t port, spi_config_t config)
+int spi_configure_controller(struct spi_controller *controller,
+			     struct spi_config *config)
 {
-    return -1;
+	int err;
+
+	if (!config || !controller)
+		return -ERRNO_MISC_INVALID_ARG;
+
+	if (controller->initialized != 1U)
+		return -ERRNO_DRIVER_UNINITIALIZED;
+
+	err = controller->api->configure(controller, config);
+
+	if (err < 0)
+		return err;
+
+	controller->config = *config;
+
+	return 0;
 }
 
-static void spi_write_byte(uint16_t base_address, uint8_t byte)
+int spi_init_device(struct spi_device *dev, struct spi_controller *controller,
+		    const uint32_t cs_pin, const uint8_t cs_active_level)
 {
+	if (!dev || !controller)
+		return -ERRNO_MISC_INVALID_ARG;
+
+	if (controller->initialized != 1U)
+		return -ERRNO_DRIVER_UNINITIALIZED;
+
+	/* Chip Select GPIO initialization (TODO) */
+
+	dev->cs = cs_pin;
+	dev->controller = controller;
+	dev->cs_active_level = cs_active_level;
+
+	return 0;
 }
 
-static uint8_t spi_read_byte(uint16_t base_address)
+int spi_select_slave(struct spi_device *dev, bool state)
 {
-    return UINT8_MAX;
+	struct spi_controller *ctrl = dev->controller;
+	int err;
+
+	if (!dev || !dev->controller)
+		return -ERRNO_MISC_INVALID_ARG;
+
+	err = mutex_lock(&ctrl->lock);
+
+	if (err < 0)
+		return err;
+
+	err = ctrl->api->select_slave(dev, state);
+
+	mutex_unlock(&ctrl->lock);
+
+	return err;
 }
 
-static uint8_t spi_transfer_byte(uint16_t base_address, uint8_t wb)
+int spi_write(struct spi_device *dev, uint8_t *buf, size_t len)
 {
-    spi_write_byte(base_address, wb);
+	struct spi_controller *ctrl = dev->controller;
+	int err;
 
-    return spi_read_byte(base_address);
+	if (!dev || !dev->controller)
+		return -ERRNO_MISC_INVALID_ARG;
+
+	err = mutex_lock(&ctrl->lock);
+
+	if (err < 0)
+		return err;
+
+	err = ctrl->api->write(dev, buf, len);
+
+	mutex_unlock(&ctrl->lock);
+
+	return err;
 }
 
-int spi_write(spi_port_t port, spi_cs_t cs, uint8_t *data, uint16_t len)
+int spi_write_only(struct spi_device *dev, uint8_t *buf, size_t len)
 {
-    return -1;
+	struct spi_controller *ctrl = dev->controller;
+	int err;
+
+	if (!dev || !dev->controller)
+		return -ERRNO_MISC_INVALID_ARG;
+
+	err = mutex_lock(&ctrl->lock);
+
+	if (err < 0)
+		return err;
+
+	err = ctrl->api->write_only(dev, buf, len);
+
+	mutex_unlock(&ctrl->lock);
+
+	return err;
 }
 
-int spi_read(spi_port_t port, spi_cs_t cs, uint8_t *data, uint16_t len)
+int spi_read(struct spi_device *dev, uint8_t *buf, size_t len)
 {
-    return -1;
+	struct spi_controller *ctrl = dev->controller;
+	int err;
+
+	if (!dev || !dev->controller)
+		return -ERRNO_MISC_INVALID_ARG;
+
+	err = mutex_lock(&ctrl->lock);
+
+	if (err < 0)
+		return err;
+
+	err = ctrl->api->read(dev, buf, len);
+
+	mutex_unlock(&ctrl->lock);
+
+	return err;
 }
 
-int spi_transfer(spi_port_t port, spi_cs_t cs, uint8_t *wd, uint8_t *rd, uint16_t len)
+int spi_read_only(struct spi_device *dev, uint8_t *buf, size_t len)
 {
-    return -1;
+	struct spi_controller *ctrl = dev->controller;
+	int err;
+
+	if (!dev || !dev->controller)
+		return -ERRNO_MISC_INVALID_ARG;
+
+	err = mutex_lock(&ctrl->lock);
+
+	if (err < 0)
+		return err;
+
+	err = ctrl->api->read_only(dev, buf, len);
+
+	mutex_unlock(&ctrl->lock);
+
+	return err;
+}
+
+int spi_transfer(struct spi_device *dev, uint8_t *tx_buf, size_t tx_len,
+		 uint8_t *rx_buf, size_t rx_len)
+{
+	struct spi_controller *ctrl = dev->controller;
+	int err;
+
+	if (!dev || !dev->controller)
+		return -ERRNO_MISC_INVALID_ARG;
+
+	err = mutex_lock(&ctrl->lock);
+
+	if (err < 0)
+		return err;
+
+	err = ctrl->api->transfer(dev, tx_buf, tx_len, rx_buf, rx_len);
+
+	mutex_unlock(&ctrl->lock);
+
+	return err;
 }
 
 /** \} End of spi group */

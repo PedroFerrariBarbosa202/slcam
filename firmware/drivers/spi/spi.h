@@ -1,34 +1,35 @@
 /*
  * spi.h
- * 
+ *
  * Copyright The SLCam Contributors.
- * 
+ *
  * This file is part of SLCam.
- * 
+ *
  * SLCam is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * SLCam is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with SLCam. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /**
  * \brief SPI driver definition.
- * 
+ *
  * \author Gabriel Mariano Marcelino <gabriel.mm8@gmail.com>
- * 
+ * \author Carlos Augusto Porto Freitas <carlos.portof@hotmail.com>
+ *
  * \version 0.2.10
- * 
+ *
  * \date 2024/02/13
- * 
+ *
  * \defgroup spi SPI
  * \ingroup drivers
  * \{
@@ -37,218 +38,218 @@
 #ifndef SPI_H_
 #define SPI_H_
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
-#define SPI_MODULE_NAME         "SPI"
+#include <utils/mutex/mutex.h>
+
+#define SPI_MODULE_NAME "SPI"
 
 /**
  * \brief SPI ports.
  */
-typedef enum
-{
-    SPI_PORT_0=0,       /**< SPI port 0. */
-    SPI_PORT_1,         /**< SPI port 1. */
-    SPI_PORT_2,         /**< SPI port 2. */
-    SPI_PORT_3,         /**< SPI port 3. */
-    SPI_PORT_4,         /**< SPI port 4. */
-    SPI_PORT_5          /**< SPI port 5. */
-} spi_port_t;
-
-/**
- * \brief SPI chips select.
- */
-typedef enum
-{
-    SPI_CS_0=0,         /**< SPI chip select 0. */
-    SPI_CS_1,           /**< SPI chip select 1. */
-    SPI_CS_2,           /**< SPI chip select 2. */
-    SPI_CS_3,           /**< SPI chip select 3. */
-    SPI_CS_4,           /**< SPI chip select 4. */
-    SPI_CS_5,           /**< SPI chip select 5. */
-    SPI_CS_6,           /**< SPI chip select 6. */
-    SPI_CS_7,           /**< SPI chip select 7. */
-    SPI_CS_8,           /**< SPI chip select 8. */
-    SPI_CS_9,           /**< SPI chip select 9. */
-    SPI_CS_NONE         /**< No SPI chip select. */
-} spi_cs_t;
+enum spi_port {
+	SPI_PORT_0, /**< SPI port 0. */
+	SPI_PORT_1, /**< SPI port 1. */
+	SPI_PORT_2, /**< SPI port 2. */
+	SPI_PORT_3, /**< SPI port 3. */
+	SPI_PORT_4, /**< SPI port 4. */
+	SPI_PORT_5 /**< SPI port 5. */
+};
 
 /**
  * \brief SPI modes.
  */
-typedef enum
-{
-    SPI_MODE_0=0,       /**< SPI mode 0 (Clock Polarity = 0, Clock Phase = 0). */
-    SPI_MODE_1,         /**< SPI mode 1 (Clock Polarity = 0, Clock Phase = 1). */
-    SPI_MODE_2,         /**< SPI mode 2 (Clock Polarity = 1, Clock Phase = 0). */
-    SPI_MODE_3          /**< SPI mode 3 (Clock Polarity = 1, Clock Phase = 1). */
-} spi_mode_t;
+enum spi_mode {
+	SPI_MODE_0, /**< SPI mode 0 (Clock Polarity = 0, Clock Phase = 0). */
+	SPI_MODE_1, /**< SPI mode 1 (Clock Polarity = 0, Clock Phase = 1). */
+	SPI_MODE_2, /**< SPI mode 2 (Clock Polarity = 1, Clock Phase = 0). */
+	SPI_MODE_3 /**< SPI mode 3 (Clock Polarity = 1, Clock Phase = 1). */
+};
 
 /**
  * \brief SPI bus configuration parameters.
  */
-typedef struct
-{
-    uint32_t speed_hz;  /**< Transfer rate in Hertz. */
-    spi_mode_t mode;    /**< SPI mode (0, 1, 2 or 3). */
-} spi_config_t;
+struct spi_config {
+	uint32_t speed_hz; /**< Transfer rate in Hertz. */
+	enum spi_mode mode; /**< SPI mode (0, 1, 2 or 3). */
+};
 
 /**
- * \brief SPI port initialization.
+ * \brief SPI device struct. (Forward declared here)
+ */
+struct spi_device;
+
+/**
+ * \brief SPI bus controller struct. (Forward declared here)
+ */
+struct spi_controller;
+
+struct spi_driver_api {
+	int (*init)(struct spi_controller *controller,
+		    struct spi_config *config, enum spi_port port);
+	int (*configure)(struct spi_controller *controller,
+			 struct spi_config *config);
+	int (*write)(struct spi_device *dev, uint8_t *buf, size_t len);
+	int (*read)(struct spi_device *dev, uint8_t *buf, size_t len);
+	int (*transfer)(struct spi_device *dev, uint8_t *tx_buf, size_t tx_len,
+			uint8_t *rx_buf, size_t rx_len);
+	int (*select_slave)(struct spi_device *dev, bool slave_state);
+	int (*write_only)(struct spi_device *dev, uint8_t *buf, size_t len);
+	int (*read_only)(struct spi_device *dev, uint8_t *buf, size_t len);
+};
+
+struct spi_controller {
+	struct spi_driver_api *api;
+	struct spi_config config;
+	enum spi_port port;
+	uint8_t initialized;
+	struct mutex lock;
+};
+
+struct spi_device {
+	struct spi_controller *controller;
+	uint32_t cs;
+	uint8_t cs_active_level; /* 1 = CS ACTIVE HIGH; 0 = CS ACTIVE LOW */
+};
+
+/**
+ * \brief Initializes a SPI controller, configures it and populate its struct.
  *
- * \param[in] port is the SPI port to initialize. It can be:
- * \parblock
- *      -\b SPI_PORT_0
- *      -\b SPI_PORT_1
- *      -\b SPI_PORT_2
- *      .
- * \endparblock
+ * \param[out] controller is the SPI controller struct to initialized.
  *
- * \param[in] config is the configuration of the SPI port.
+ * \param[in] config is the configuration to apply to the controller.
+ *
+ * \param[in] port is the specific hardware port number of the controller.
  *
  * \return The status/error code.
  */
-int spi_init(spi_port_t port, spi_config_t config);
+int spi_init_controller(struct spi_controller *controller,
+			struct spi_config *config, enum spi_port port);
 
 /**
- * \brief Selects or unselects an SPI device.
+ * \brief Configures a SPI controller. It assumes that the controller is 
+ * already initialized.
  *
- * \param[in] port is the SPI port of the device to select. It can be:
- * \parblock
- *      -\b SPI_PORT_0
- *      -\b SPI_PORT_1
- *      -\b SPI_PORT_2
- *      .
- * \endparblock
+ * \param[out] controller is the SPI controller struct to configured.
  *
- * \param[in] cs is the chip select pin of the device to select. It can be:
- * \parblock
- *      -\b SPI_CS_0
- *      -\b SPI_CS_1
- *      -\b SPI_CS_2
- *      -\b SPI_CS_3
- *      -\b SPI_CS_4
- *      -\b SPI_CS_5
- *      -\b SPI_CS_6
- *      -\b SPI_CS_7
- *      -\b SPI_CS_8
- *      -\b SPI_CS_9
- *      -\b SPI_CS_NONE
- *      .
- * \endparblock
- *
- * \param[in] active is TRUE/FALSE to select/unselect the SPI device.
+ * \param[in] config is the configuration to apply to the controller.
  *
  * \return The status/error code.
  */
-int spi_select_slave(spi_port_t port, spi_cs_t cs, bool active);
+int spi_configure_controller(struct spi_controller *controller,
+			     struct spi_config *config);
 
 /**
- * \brief Writes data to a given SPI port.
+ * \brief Initializes a SPI device.
  *
- * \param[in] port is the SPI port to write data. It can be:
- * \parblock
- *      -\b SPI_PORT_0
- *      -\b SPI_PORT_1
- *      -\b SPI_PORT_2
- *      .
- * \endparblock
+ * \param[out] dev is the SPI device struct to initialized.
  *
- * \param[in] cs is the chip select pin. It can be:
- * \parblock
- *      -\b SPI_CS_0
- *      -\b SPI_CS_1
- *      -\b SPI_CS_2
- *      -\b SPI_CS_3
- *      -\b SPI_CS_4
- *      -\b SPI_CS_5
- *      -\b SPI_CS_6
- *      -\b SPI_CS_7
- *      -\b SPI_CS_8
- *      -\b SPI_CS_9
- *      -\b SPI_CS_NONE
- *      .
- * \endparblock
+ * \param[in] controller is the SPI controller struct that represents the 
+ * controller that the device is connected. It assumes that the controller is 
+ * already initialized and configured.
  *
- * \param[in] data is the data to write.
+ * \param[in] cs_pin is the SPI chip select gpio pin to be initialized.
  *
- * \param[in] len is the number of bytes to write.
+ * \param[in] cs_active_level is the SPI chip select active level.
  *
  * \return The status/error code.
  */
-int spi_write(spi_port_t port, spi_cs_t cs, uint8_t *data, uint16_t len);
+int spi_init_device(struct spi_device *dev, struct spi_controller *controller,
+		    const uint32_t cs_pin, const uint8_t cs_active_level);
 
 /**
- * \brief Reads data from a given SPI port.
+ * \brief Change the state for the CS pin of a SPI device.
  *
- * \param[in] port is the SPI port to read data. It can be:
- * \parblock
- *      -\b SPI_PORT_0
- *      -\b SPI_PORT_1
- *      -\b SPI_PORT_2
- *      .
- * \endparblock
+ * \param[in] dev is the SPI device struct.
  *
- * \param[in] cs is the chip select pin. It can be:
- * \parblock
- *      -\b SPI_CS_0
- *      -\b SPI_CS_1
- *      -\b SPI_CS_2
- *      -\b SPI_CS_3
- *      -\b SPI_CS_4
- *      -\b SPI_CS_5
- *      -\b SPI_CS_6
- *      -\b SPI_CS_7
- *      -\b SPI_CS_8
- *      -\b SPI_CS_9
- *      -\b SPI_CS_NONE
- *      .
- * \endparblock
- *
- * \param[in] data is a pointer to store the read data.
- *
- * \param[in] len is the number of bytes to read.
+ * \param[in] state is the state to set the pin to.
  *
  * \return The status/error code.
  */
-int spi_read(spi_port_t port, spi_cs_t cs, uint8_t *data, uint16_t len);
+int spi_select_slave(struct spi_device *dev, bool state);
 
 /**
- * \brief Transfer data over a SPI port (full-duplex operation).
+ * \brief Write to a SPI device.
  *
- * \param[in] port is the SPI port to transfer data. It can be:
- * \parblock
- *      -\b SPI_PORT_0
- *      -\b SPI_PORT_1
- *      -\b SPI_PORT_2
- *      .
- * \endparblock
+ * \param[in] dev is the SPI device struct to write to.
  *
- * \param[in] cs is the chip select pin. It can be:
- * \parblock
- *      -\b SPI_CS_0
- *      -\b SPI_CS_1
- *      -\b SPI_CS_2
- *      -\b SPI_CS_3
- *      -\b SPI_CS_4
- *      -\b SPI_CS_5
- *      -\b SPI_CS_6
- *      -\b SPI_CS_7
- *      -\b SPI_CS_8
- *      -\b SPI_CS_9
- *      -\b SPI_CS_NONE
- *      .
- * \endparblock
+ * \param[in] buf is the data to be written.
  *
- * \param[in] wd is the data to write during the SPI transfer.
- *
- * \param[in] rd is a pointer to store the read data during the SPI transfer.
- *
- * \param[in] len is the number of bytes to transfer.
+ * \param[in] len is the length of the buffer in bytes.
  *
  * \return The status/error code.
  */
-int spi_transfer(spi_port_t port, spi_cs_t cs, uint8_t *wd, uint8_t *rd, uint16_t len);
+int spi_write(struct spi_device *dev, uint8_t *buf, size_t len);
+
+/**
+ * \brief Write to a SPI device, without changing the chip select state.
+ *
+ * \param[in] dev is the SPI device struct to write to.
+ *
+ * \param[in] buf is the data to be written.
+ *
+ * \param[in] len is the length of the buffer in bytes.
+ *
+ * \return The status/error code.
+ */
+int spi_write_only(struct spi_device *dev, uint8_t *buf, size_t len);
+
+/**
+ * \brief Read from a SPI device.
+ *
+ * \param[in] dev is the SPI device struct to read from.
+ *
+ * \param[out] buf is a buffer where read data is stored.
+ *
+ * \param[in] len is the number of bytes to be read.
+ *
+ * \return The number of bytes read, if errors occured the function returns 
+ * negative numbers.
+ */
+int spi_read(struct spi_device *dev, uint8_t *buf, size_t len);
+
+/**
+ * \brief Read from a SPI device, without changing the chip select state.
+ *
+ * \param[in] dev is the SPI device struct to read from.
+ *
+ * \param[out] buf is a buffer where read data is stored.
+ *
+ * \param[in] len is the number of bytes to be read.
+ *
+ * \return The number of bytes read, if errors occured the function returns 
+ * negative numbers.
+ */
+int spi_read_only(struct spi_device *dev, uint8_t *buf, size_t len);
+
+/**
+ * \brief Perform a transfer with a SPI device.
+ *
+ * \param[in] dev is the SPI device struct.
+ *
+ * \param[in] tx_buf is the data to be written.
+ *
+ * \param[in] tx_len is the length of the buffer in bytes.
+ *
+ * \param[out] rx_buf is a buffer where read data is stored.
+ *
+ * \param[in] rx_len is the number of bytes to be read.
+ *
+ * \return The number of bytes read, if errors occured the function returns 
+ * negative numbers.
+ */
+int spi_transfer(struct spi_device *dev, uint8_t *tx_buf, size_t tx_len,
+		 uint8_t *rx_buf, size_t rx_len);
+
+/**
+ * \brief Get hardware specific spi driver functions struct. THIS FUNCTION 
+ * SHOULD BE IMPLEMENTED FOR EACH CPU, otherwise the driver does not work.
+ *
+ * \return The struct containing the hardware specific functions. 
+ */
+extern struct spi_driver_api *spi_hw_get_driver(void);
 
 #endif /* SPI_H_ */
 

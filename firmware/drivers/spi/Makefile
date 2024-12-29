@@ -19,7 +19,7 @@ NM=arm-none-eabi-nm
 SIZE=arm-none-eabi-size
 GDB=arm-none-eabi-gdb
 
-LIBS= -I../../ -I../../hal/include/
+LIBS= -I../../ -I../../hal/include/ -I../../utils/ -I../../os/include/ -I../../os/portable/GCC/ARM_CM3/ -I../../config/
 CFLAGS=-c -mcpu=cortex-m3 -mthumb -O0 $(LIBS) -D$(OPENCM3_FAMILY)
 
 .PHONY: all
