@@ -25,7 +25,7 @@ CFLAGS=--static -nostartfiles -g3 -Os -fno-common -ffunction-sections -fdata-sec
 LDFLAGS=-nostartfiles --specs=nano.specs -Wl,--gc-sections,-Map,$(TARGET).map,-T$(PARTNUMBER).ld -mcpu=cortex-m3 -mthumb
 
 .PHONY: all
-all: libopencm3_stm32f1.a libs_rule drivers_rule os_rule system_rule tasks_rule crt.o main.o
+all: libopencm3_stm32f1.a libs_rule drivers_rule os_rule system_rule tasks_rule utils_rule crt.o main.o
 	$(LD) $(LDFLAGS) $(BUILD_DIR)/*.o -o $(BUILD_DIR)/$(TARGET).elf -L$(BUILD_DIR)/ -lopencm3_stm32f1 -lm
 	$(OBJCOPY) -O binary $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).bin
 	$(SIZE) $(BUILD_DIR)/$(TARGET).elf
@@ -66,3 +66,6 @@ system_rule: system/Makefile
 
 tasks_rule: tasks/Makefile
 	$(MAKE) BUILD_DIR=$(BUILD_DIR) OPENCM3_FAMILY=$(OPENCM3_FAMILY) -C tasks
+
+utils_rule: utils/Makefile
+	$(MAKE) BUILD_DIR=$(BUILD_DIR) OPENCM3_FAMILY=$(OPENCM3_FAMILY) -C utils
