@@ -39,17 +39,27 @@
 
 #include "spi.h"
 
-int spi_init_controller(struct spi_controller *controller,
-			struct spi_config *config, enum spi_port port)
+int spi_init_controller(struct spi_controller *controller, enum spi_port port,
+			const struct spi_config *config)
 {
 	struct spi_driver_api *api;
 	int err;
 
-	if (!config || !controller)
+	if (!controller)
 		return -ERRNO_MISC_INVALID_ARG;
+
+	controller = spi_hw_get_controller_handle(port);
+
+	if (!controller)
+		return -ERRNO_DRIVER_NO_PORT;
 
 	if (controller->initialized == 1)
 		return 0;
+
+	/* This check is in here to enable config to be NULL, if the controller 
+     * is already be initialized. */
+	if (!config)
+		return -ERRNO_MISC_INVALID_ARG;
 
 	api = spi_hw_get_driver();
 
@@ -95,19 +105,23 @@ int spi_configure_controller(struct spi_controller *controller,
 	return 0;
 }
 
-int spi_init_device(struct spi_device *dev, struct spi_controller *controller,
-		    const uint32_t cs_pin, const uint8_t cs_active_level)
+int spi_init_device(struct spi_device *dev, enum spi_port port,
+		    const struct spi_config *config, const uint32_t cs_pin,
+		    const uint8_t cs_active_level)
 {
-	if (!dev || !controller)
+	int err;
+
+	if (!dev)
 		return -ERRNO_MISC_INVALID_ARG;
 
-	if (controller->initialized != 1U)
-		return -ERRNO_DRIVER_UNINITIALIZED;
+	err = spi_init_controller(dev->controller, port, config);
+
+	if (err < 0)
+		return err;
 
 	/* Chip Select GPIO initialization (TODO) */
 
 	dev->cs = cs_pin;
-	dev->controller = controller;
 	dev->cs_active_level = cs_active_level;
 
 	return 0;
@@ -115,121 +129,121 @@ int spi_init_device(struct spi_device *dev, struct spi_controller *controller,
 
 int spi_select_slave(struct spi_device *dev, bool state)
 {
-	struct spi_controller *ctrl = dev->controller;
+	struct spi_controller *controller = dev->controller;
 	int err;
 
 	if (!dev || !dev->controller)
 		return -ERRNO_MISC_INVALID_ARG;
 
-	err = mutex_lock(&ctrl->lock);
+	err = mutex_lock(&controller->lock);
 
 	if (err < 0)
 		return err;
 
-	err = ctrl->api->select_slave(dev, state);
+	err = controller->api->select_slave(dev, state);
 
-	mutex_unlock(&ctrl->lock);
+	mutex_unlock(&controller->lock);
 
 	return err;
 }
 
-int spi_write(struct spi_device *dev, uint8_t *buf, size_t len)
+int spi_device_write(struct spi_device *dev, uint8_t *buf, size_t len)
 {
-	struct spi_controller *ctrl = dev->controller;
+	struct spi_controller *controller = dev->controller;
 	int err;
 
 	if (!dev || !dev->controller)
 		return -ERRNO_MISC_INVALID_ARG;
 
-	err = mutex_lock(&ctrl->lock);
+	err = mutex_lock(&controller->lock);
 
 	if (err < 0)
 		return err;
 
-	err = ctrl->api->write(dev, buf, len);
+	err = controller->api->write(dev, buf, len);
 
-	mutex_unlock(&ctrl->lock);
+	mutex_unlock(&controller->lock);
 
 	return err;
 }
 
-int spi_write_only(struct spi_device *dev, uint8_t *buf, size_t len)
+int spi_device_write_only(struct spi_device *dev, uint8_t *buf, size_t len)
 {
-	struct spi_controller *ctrl = dev->controller;
+	struct spi_controller *controller = dev->controller;
 	int err;
 
 	if (!dev || !dev->controller)
 		return -ERRNO_MISC_INVALID_ARG;
 
-	err = mutex_lock(&ctrl->lock);
+	err = mutex_lock(&controller->lock);
 
 	if (err < 0)
 		return err;
 
-	err = ctrl->api->write_only(dev, buf, len);
+	err = controller->api->write_only(dev, buf, len);
 
-	mutex_unlock(&ctrl->lock);
+	mutex_unlock(&controller->lock);
 
 	return err;
 }
 
-int spi_read(struct spi_device *dev, uint8_t *buf, size_t len)
+int spi_device_read(struct spi_device *dev, uint8_t *buf, size_t len)
 {
-	struct spi_controller *ctrl = dev->controller;
+	struct spi_controller *controller = dev->controller;
 	int err;
 
 	if (!dev || !dev->controller)
 		return -ERRNO_MISC_INVALID_ARG;
 
-	err = mutex_lock(&ctrl->lock);
+	err = mutex_lock(&controller->lock);
 
 	if (err < 0)
 		return err;
 
-	err = ctrl->api->read(dev, buf, len);
+	err = controller->api->read(dev, buf, len);
 
-	mutex_unlock(&ctrl->lock);
+	mutex_unlock(&controller->lock);
 
 	return err;
 }
 
-int spi_read_only(struct spi_device *dev, uint8_t *buf, size_t len)
+int spi_device_read_only(struct spi_device *dev, uint8_t *buf, size_t len)
 {
-	struct spi_controller *ctrl = dev->controller;
+	struct spi_controller *controller = dev->controller;
 	int err;
 
 	if (!dev || !dev->controller)
 		return -ERRNO_MISC_INVALID_ARG;
 
-	err = mutex_lock(&ctrl->lock);
+	err = mutex_lock(&controller->lock);
 
 	if (err < 0)
 		return err;
 
-	err = ctrl->api->read_only(dev, buf, len);
+	err = controller->api->read_only(dev, buf, len);
 
-	mutex_unlock(&ctrl->lock);
+	mutex_unlock(&controller->lock);
 
 	return err;
 }
 
-int spi_transfer(struct spi_device *dev, uint8_t *tx_buf, size_t tx_len,
-		 uint8_t *rx_buf, size_t rx_len)
+int spi_device_transfer(struct spi_device *dev, uint8_t *tx_buf, size_t tx_len,
+			uint8_t *rx_buf, size_t rx_len)
 {
-	struct spi_controller *ctrl = dev->controller;
+	struct spi_controller *controller = dev->controller;
 	int err;
 
 	if (!dev || !dev->controller)
 		return -ERRNO_MISC_INVALID_ARG;
 
-	err = mutex_lock(&ctrl->lock);
+	err = mutex_lock(&controller->lock);
 
 	if (err < 0)
 		return err;
 
-	err = ctrl->api->transfer(dev, tx_buf, tx_len, rx_buf, rx_len);
+	err = controller->api->transfer(dev, tx_buf, tx_len, rx_buf, rx_len);
 
-	mutex_unlock(&ctrl->lock);
+	mutex_unlock(&controller->lock);
 
 	return err;
 }
