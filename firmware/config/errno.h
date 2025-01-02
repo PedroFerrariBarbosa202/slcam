@@ -36,6 +36,9 @@
 #ifndef ERRNO_H
 #define ERRNO_H
 
+#define STRINGZ(x) #x
+#define M_STRINGZ(x) STRINGZ(x)
+
 /* No error ocurred */
 #define ERRNO_SUCCESS 0x00U /** No errors found */
 
@@ -55,6 +58,39 @@
 #define ERRNO_MISC_UNSUPPORTED_OP 0x83U /** Unsupported operation */
 #define ERRNO_MISC_UNKNOWN 0x84U /** Unknown error occured */
 #define ERRNO_MISC_TIMEOUT 0x85U /** Operation timeout */
+
+static inline const char *errno_to_string(long errno)
+{
+	switch (-errno) {
+	case ERRNO_SUCCESS:
+		return STRINGZ(ERRNO_SUCCESS);
+	case ERRNO_DRIVER_NO_PORT:
+		return STRINGZ(ERRNO_DRIVER_NO_PORT);
+	case ERRNO_DRIVER_NO_PARAMETER:
+		return STRINGZ(ERRNO_DRIVER_NO_PARAMETER);
+	case ERRNO_DRIVER_FAILED:
+		return STRINGZ(ERRNO_DRIVER_FAILED);
+	case ERRNO_DRIVER_UNINITIALIZED:
+		return STRINGZ(ERRNO_DRIVER_UNINITIALIZED);
+	case ERRNO_DEVICE_FAILED_CONFIG:
+		return STRINGZ(ERRNO_DEVICE_FAILED_CONFIG);
+	case ERRNO_DEVICE_FAILED_COM:
+		return STRINGZ(ERRNO_DEVICE_FAILED_COM);
+	case ERRNO_MISC_INVALID_ARG:
+		return STRINGZ(ERRNO_MISC_INVALID_ARG);
+	case ERRNO_MISC_FAILED_ALLOC:
+		return STRINGZ(ERRNO_MISC_FAILED_ALLOC);
+	case ERRNO_MISC_UNSUPPORTED_OP:
+		return STRINGZ(ERRNO_MISC_UNSUPPORTED_OP);
+	case ERRNO_MISC_UNKNOWN:
+		return STRINGZ(ERRNO_MISC_UNKNOWN);
+	case ERRNO_MISC_TIMEOUT:
+		return STRINGZ(ERRNO_MISC_TIMEOUT);
+	default:
+		return "Unmapped error!";
+	}
+	return "";
+}
 
 #endif /*ERRNO_H */
 
