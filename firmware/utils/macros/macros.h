@@ -55,7 +55,7 @@
 #define __no_inline __attribute__((noinline))
 #else
 #define __unused
-#define __always_inline inline
+#define __always_inline
 #define __no_inline
 #endif
 
