@@ -78,6 +78,10 @@ int tps2044_init(const tps_2044_t *dev)
 		}
 	}
 
+	if (err < 0) {
+		err = -ERRNO_DEVICE_FAILED_CONFIG;
+	}
+
 	return err;
 }
 
