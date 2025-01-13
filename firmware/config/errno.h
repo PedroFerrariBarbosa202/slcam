@@ -36,8 +36,7 @@
 #ifndef ERRNO_H
 #define ERRNO_H
 
-#define STRINGZ(x) #x
-#define M_STRINGZ(x) STRINGZ(x)
+#include <utils/macros/macros.h>
 
 /* No error ocurred */
 #define ERRNO_SUCCESS 0x00U /** No errors found */
@@ -47,6 +46,8 @@
 #define ERRNO_DRIVER_NO_PARAMETER 0x12U /** Invalid parameter value */
 #define ERRNO_DRIVER_FAILED 0x13U /** Failed to execute HAL function */
 #define ERRNO_DRIVER_UNINITIALIZED 0x14U /** Driver was not yet initialized */
+#define ERRNO_DRIVER_NO_HW_IMPL \
+	0x15U /** Driver could not get the specific hardware implementation */
 
 /* Device Level errors */
 #define ERRNO_DEVICE_FAILED_CONFIG 0x21U /** Failed to configure driver */
