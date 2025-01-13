@@ -1,0 +1,15 @@
+ifndef BUILD_DIR
+	BUILD_DIR=$(CURDIR)
+endif
+
+ifndef OPENCM3_FAMILY
+	OPENCM3_FAMILY=STM32F1
+endif
+
+.PHONY: all
+all:
+	$(MAKE) BUILD_DIR=$(BUILD_DIR) OPENCM3_FAMILY=$(OPENCM3_FAMILY) -C tps2044
+
+.PHONY: clean
+clean:
+	rm $(BUILD_DIR)/*.o
