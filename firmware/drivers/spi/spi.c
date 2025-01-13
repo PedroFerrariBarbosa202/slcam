@@ -36,6 +36,7 @@
 #include <stdint.h>
 #include <config/errno.h>
 #include <utils/mutex/mutex.h>
+#include <drivers/gpio/gpio.h>
 
 #include "spi.h"
 
@@ -77,7 +78,7 @@ int spi_init_controller(struct spi_controller *controller, enum spi_port port,
 		return err;
 
 	controller->port = port;
-	controller->api = api;
+	controller->api = *api;
 	controller->config = *config;
 	controller->initialized = 1U;
 
@@ -95,7 +96,7 @@ int spi_configure_controller(struct spi_controller *controller,
 	if (controller->initialized != 1U)
 		return -ERRNO_DRIVER_UNINITIALIZED;
 
-	err = controller->api->configure(controller, config);
+	err = controller->api.configure(controller, config);
 
 	if (err < 0)
 		return err;
@@ -106,7 +107,7 @@ int spi_configure_controller(struct spi_controller *controller,
 }
 
 int spi_init_device(struct spi_device *dev, enum spi_port port,
-		    const struct spi_config *config, const uint32_t cs_pin,
+		    const struct spi_config *config, const uint8_t cs_pin,
 		    const uint8_t cs_active_level)
 {
 	int err;
@@ -119,7 +120,12 @@ int spi_init_device(struct spi_device *dev, enum spi_port port,
 	if (err < 0)
 		return err;
 
-	/* Chip Select GPIO initialization (TODO) */
+	err = gpio_init_pin(cs_pin, GPIO_DRV_MODE_OUTPUT_PUSH_PULL);
+
+	if (err < 0)
+		return err;
+
+	gpio_set_state(cs_pin, !cs_active_level);
 
 	dev->cs = cs_pin;
 	dev->cs_active_level = cs_active_level;
@@ -140,7 +146,7 @@ int spi_select_slave(struct spi_device *dev, bool state)
 	if (err < 0)
 		return err;
 
-	err = controller->api->select_slave(dev, state);
+	err = controller->api.select_slave(dev, state);
 
 	mutex_unlock(&controller->lock);
 
@@ -160,7 +166,7 @@ int spi_device_write(struct spi_device *dev, uint8_t *buf, size_t len)
 	if (err < 0)
 		return err;
 
-	err = controller->api->write(dev, buf, len);
+	err = controller->api.write(dev, buf, len);
 
 	mutex_unlock(&controller->lock);
 
@@ -180,7 +186,7 @@ int spi_device_write_only(struct spi_device *dev, uint8_t *buf, size_t len)
 	if (err < 0)
 		return err;
 
-	err = controller->api->write_only(dev, buf, len);
+	err = controller->api.write_only(dev, buf, len);
 
 	mutex_unlock(&controller->lock);
 
@@ -200,7 +206,7 @@ int spi_device_read(struct spi_device *dev, uint8_t *buf, size_t len)
 	if (err < 0)
 		return err;
 
-	err = controller->api->read(dev, buf, len);
+	err = controller->api.read(dev, buf, len);
 
 	mutex_unlock(&controller->lock);
 
@@ -220,7 +226,7 @@ int spi_device_read_only(struct spi_device *dev, uint8_t *buf, size_t len)
 	if (err < 0)
 		return err;
 
-	err = controller->api->read_only(dev, buf, len);
+	err = controller->api.read_only(dev, buf, len);
 
 	mutex_unlock(&controller->lock);
 
@@ -241,7 +247,7 @@ int spi_device_transfer(struct spi_device *dev, uint8_t *tx_buf, size_t tx_len,
 	if (err < 0)
 		return err;
 
-	err = controller->api->transfer(dev, tx_buf, tx_len, rx_buf, rx_len);
+	err = controller->api.transfer(dev, tx_buf, tx_len, rx_buf, rx_len);
 
 	mutex_unlock(&controller->lock);
 

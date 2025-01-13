@@ -73,7 +73,7 @@ enum spi_mode {
  */
 struct spi_config {
 	uint32_t speed_hz; /**< Transfer rate in Hertz. */
-	enum spi_mode mode; /**< SPI mode (0, 1, 2 or 3). */
+	uint8_t mode; /**< SPI mode (0, 1, 2 or 3). */
 };
 
 /**
@@ -101,16 +101,16 @@ struct spi_driver_api {
 };
 
 struct spi_controller {
-	struct spi_driver_api *api;
+	struct spi_driver_api api;
 	struct spi_config config;
-	enum spi_port port;
-	uint8_t initialized;
 	struct mutex lock;
+	uint8_t port;
+	uint8_t initialized;
 };
 
 struct spi_device {
 	struct spi_controller *controller;
-	uint32_t cs;
+	uint8_t cs; /* Chip select gpio pin */
 	uint8_t cs_active_level; /* 1 = CS ACTIVE HIGH; 0 = CS ACTIVE LOW */
 };
 
@@ -162,7 +162,7 @@ int spi_configure_controller(struct spi_controller *controller,
  * \return The status/error code.
  */
 int spi_init_device(struct spi_device *dev, enum spi_port port,
-		    const struct spi_config *config, const uint32_t cs_pin,
+		    const struct spi_config *config, const uint8_t cs_pin,
 		    const uint8_t cs_active_level);
 
 /**
