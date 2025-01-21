@@ -20,11 +20,12 @@ SIZE=arm-none-eabi-size
 GDB=arm-none-eabi-gdb
 
 LIBS= -I../../ -I../../hal/include/ -I../../utils/ -I../../os/include/ -I../../os/portable/GCC/ARM_CM3/ -I../../config/
-CFLAGS=-c -mcpu=cortex-m3 -mthumb -O0 $(LIBS) -D$(OPENCM3_FAMILY)
+CFLAGS=-c -mcpu=cortex-m3 -mthumb -Os $(LIBS) -D$(OPENCM3_FAMILY)
 
 .PHONY: all
 all:
 	$(CC) $(CFLAGS) $(TARGET).c -o $(BUILD_DIR)/$(TARGET).o
+	$(CC) $(CFLAGS) spi_stm32f103.c -o $(BUILD_DIR)/spi_stm32f103.o
 
 .PHONY: clean
 clean:
