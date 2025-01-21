@@ -83,8 +83,7 @@ int mutex_lock_with_timeout(struct mutex *lock, uint32_t timeout)
 		return -ERRNO_MISC_INVALID_ARG;
 
 #ifdef CONFIG_OS_IS_FREERTOS
-	if (xSemaphoreTakeRecursive(lock->lock, pdMS_TO_TICKS(timeout)) !=
-	    pdPASS)
+	if (xSemaphoreTakeRecursive(lock->lock, pdMS_TO_TICKS(timeout)) != pdPASS)
 		return -ERRNO_MISC_TIMEOUT;
 #else
 	return -ERRNO_MISC_UNSUPPORTED_OP;
@@ -99,7 +98,7 @@ int mutex_try_lock(struct mutex *lock)
 		return -ERRNO_MISC_INVALID_ARG;
 
 #ifdef CONFIG_OS_IS_FREERTOS
-	return xSemaphoreTakeRecursive(lock->lock, 0U);
+	xSemaphoreTakeRecursive(lock->lock, 0U);
 #else
 	return -ERRNO_MISC_UNSUPPORTED_OP;
 #endif
