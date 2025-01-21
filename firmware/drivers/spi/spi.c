@@ -40,21 +40,24 @@
 
 #include "spi.h"
 
-int spi_init_controller(struct spi_controller *controller, enum spi_port port,
+int spi_init_controller(struct spi_controller **controller, enum spi_port port,
 			const struct spi_config *config)
 {
 	struct spi_driver_api *api;
+	struct spi_controller *ctrl;
 	int err;
 
 	if (!controller)
 		return -ERRNO_MISC_INVALID_ARG;
 
-	controller = spi_hw_get_controller_handle(port);
+	ctrl = spi_hw_get_controller_handle(port);
 
-	if (!controller)
+	if (ctrl == NULL)
 		return -ERRNO_DRIVER_NO_PORT;
 
-	if (controller->initialized == 1)
+	*controller = ctrl;
+
+	if (ctrl->initialized == 1)
 		return 0;
 
 	/* This check is in here to enable config to be NULL, if the controller 
@@ -67,26 +70,25 @@ int spi_init_controller(struct spi_controller *controller, enum spi_port port,
 	if (!api)
 		return -ERRNO_MISC_UNSUPPORTED_OP;
 
-	err = mutex_init(&controller->lock);
+	err = mutex_init(&ctrl->lock);
 
 	if (err < 0)
 		return err;
 
-	err = api->init(controller, config, port);
+	err = api->init(ctrl, config, port);
 
 	if (err < 0)
 		return err;
 
-	controller->port = port;
-	controller->api = *api;
-	controller->config = *config;
-	controller->initialized = 1U;
+	(*controller)->port = port;
+	(*controller)->api = *api;
+	(*controller)->config = *config;
+	(*controller)->initialized = 1U;
 
 	return 0;
 }
 
-int spi_configure_controller(struct spi_controller *controller,
-			     struct spi_config *config)
+int spi_configure_controller(struct spi_controller *controller, struct spi_config *config)
 {
 	int err;
 
@@ -106,16 +108,15 @@ int spi_configure_controller(struct spi_controller *controller,
 	return 0;
 }
 
-int spi_init_device(struct spi_device *dev, enum spi_port port,
-		    const struct spi_config *config, const uint8_t cs_pin,
-		    const uint8_t cs_active_level)
+int spi_init_device(struct spi_device *dev, enum spi_port port, const struct spi_config *config,
+		    const uint8_t cs_pin, const uint8_t cs_active_level)
 {
 	int err;
 
 	if (!dev)
 		return -ERRNO_MISC_INVALID_ARG;
 
-	err = spi_init_controller(dev->controller, port, config);
+	err = spi_init_controller(&dev->controller, port, config);
 
 	if (err < 0)
 		return err;
@@ -233,8 +234,8 @@ int spi_device_read_only(struct spi_device *dev, uint8_t *buf, size_t len)
 	return err;
 }
 
-int spi_device_transfer(struct spi_device *dev, uint8_t *tx_buf, size_t tx_len,
-			uint8_t *rx_buf, size_t rx_len)
+int spi_device_transfer(struct spi_device *dev, uint8_t *tx_buf, size_t tx_len, uint8_t *rx_buf,
+			size_t rx_len)
 {
 	struct spi_controller *controller = dev->controller;
 	int err;

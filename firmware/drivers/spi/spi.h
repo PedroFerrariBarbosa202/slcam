@@ -87,14 +87,13 @@ struct spi_device;
 struct spi_controller;
 
 struct spi_driver_api {
-	int (*init)(struct spi_controller *controller,
-		    const struct spi_config *config, const enum spi_port port);
-	int (*configure)(struct spi_controller *controller,
-			 struct spi_config *config);
+	int (*init)(struct spi_controller *controller, const struct spi_config *config,
+		    const enum spi_port port);
+	int (*configure)(struct spi_controller *controller, struct spi_config *config);
 	int (*write)(struct spi_device *dev, uint8_t *buf, size_t len);
 	int (*read)(struct spi_device *dev, uint8_t *buf, size_t len);
-	int (*transfer)(struct spi_device *dev, uint8_t *tx_buf, size_t tx_len,
-			uint8_t *rx_buf, size_t rx_len);
+	int (*transfer)(struct spi_device *dev, uint8_t *tx_buf, size_t tx_len, uint8_t *rx_buf,
+			size_t rx_len);
 	int (*select_slave)(struct spi_device *dev, bool slave_state);
 	int (*write_only)(struct spi_device *dev, uint8_t *buf, size_t len);
 	int (*read_only)(struct spi_device *dev, uint8_t *buf, size_t len);
@@ -117,8 +116,11 @@ struct spi_device {
 /**
  * \brief Initializes a SPI controller, configures it and populate its struct.
  *
- * \param[out] controller is the initialized SPI controller struct. It the function 
- * returned an error this should be in an invalid state.
+ * \param[out] controller is a pointer to the SPI controller handle inside a 
+ * spi_device. This needs to be a double pointer since, after initialization, 
+ * this handle will be pointing to the hardware specific controller instance, 
+ * avoiding, therefore, multiple instances of the same physical controller.
+ * If the function returned an error this should be in an invalid state. 
  *
  * \param[in] port is the specific hardware port number of the controller.
  *
@@ -126,8 +128,7 @@ struct spi_device {
  *
  * \return The status/error code.
  */
-int spi_init_controller(struct spi_controller *controller,
-			const enum spi_port port,
+int spi_init_controller(struct spi_controller **controller, const enum spi_port port,
 			const struct spi_config *config);
 
 /**
@@ -140,8 +141,7 @@ int spi_init_controller(struct spi_controller *controller,
  *
  * \return The status/error code.
  */
-int spi_configure_controller(struct spi_controller *controller,
-			     struct spi_config *config);
+int spi_configure_controller(struct spi_controller *controller, struct spi_config *config);
 
 /**
  * \brief Initializes a SPI device.
@@ -161,9 +161,8 @@ int spi_configure_controller(struct spi_controller *controller,
  *
  * \return The status/error code.
  */
-int spi_init_device(struct spi_device *dev, enum spi_port port,
-		    const struct spi_config *config, const uint8_t cs_pin,
-		    const uint8_t cs_active_level);
+int spi_init_device(struct spi_device *dev, enum spi_port port, const struct spi_config *config,
+		    const uint8_t cs_pin, const uint8_t cs_active_level);
 
 /**
  * \brief Change the state for the CS pin of a SPI device.
@@ -246,8 +245,8 @@ int spi_device_read_only(struct spi_device *dev, uint8_t *buf, size_t len);
  * \return The number of bytes read, if errors occured the function returns 
  * negative numbers.
  */
-int spi_device_transfer(struct spi_device *dev, uint8_t *tx_buf, size_t tx_len,
-			uint8_t *rx_buf, size_t rx_len);
+int spi_device_transfer(struct spi_device *dev, uint8_t *tx_buf, size_t tx_len, uint8_t *rx_buf,
+			size_t rx_len);
 
 /**
  * \brief Get hardware specific spi driver functions struct. THIS FUNCTION 
