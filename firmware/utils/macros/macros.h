@@ -46,13 +46,14 @@
 
 /* Stringfy macros */
 #define STRINGZ(x) #x
-#define ASTRINGZ(x) STRINGZ(x) 
+#define ASTRINGZ(x) STRINGZ(x)
 
 /* GCC extension macros */
 #ifdef __GNUC__
 #define __unused __attribute__((unused))
 #define __always_inline __attribute__((always_inline))
 #define __no_inline __attribute__((noinline))
+#define container_of(ptr, type, member) ((type *)(void *)((char *)(ptr) - offsetof(type, member)))
 #else
 #define __unused
 #define __always_inline
