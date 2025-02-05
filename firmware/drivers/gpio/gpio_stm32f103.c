@@ -65,7 +65,7 @@ static inline __always_inline uint32_t select_gpio_port(const uint8_t port)
 		break;
 	}
 
-	return port;
+	return p;
 }
 
 static int convert_pin_num_to_port(struct gpio_pin *gpio, const uint8_t pin)
