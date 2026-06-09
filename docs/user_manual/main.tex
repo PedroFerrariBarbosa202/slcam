@@ -1,12 +1,25 @@
 %
+% main.tex
+%
+% Copyright The SLCam Contributors.
+%
+% SLCam Documentation
+%
+% This work is licensed under the Creative Commons Attribution-ShareAlike 4.0
+% International License. To view a copy of this license,
+% visit http://creativecommons.org/licenses/by-sa/4.0/.
+%
+
+%
 % \brief Main file.
 %
 % \author Gabriel Mariano Marcelino <gabriel.mm8@gmail.com>
 %
-% \version 0.2.0
+% \version 0.3.0
 %
-% \date 2023/02/09
+% \date 2021/04/01
 %
+
 
 \documentclass[a4paper,12pt]{book}
 
@@ -22,7 +35,7 @@
     pdfauthor   = {SpaceLab},
     pdfsubject  = {\thetitle},
     pdftitle    = {\thetitle},
-    pdfkeywords = {Nanosatellites, CubeSats, Payload, Camera}
+    pdfkeywords = {Nanosatellites, CubeSats, TTC}
 }
 
 \begin{document}
@@ -51,11 +64,9 @@
     \setcounter{page}{1}
 
     \input{chapters/introduction}
-    \input{chapters/system_overview}
     \input{chapters/hardware}
     \input{chapters/firmware}
-    \input{chapters/assembly}
-    \input{chapters/instructions}
+    \input{chapters/operation}
     \input{chapters/references}
     \input{appendices/appendices}
 

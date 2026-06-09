@@ -1,4 +1,4 @@
-VERSION=v0.2
+VERSION=v0.3
 SRC=main
 TARGET=slb-cam-doc-$(VERSION)
 
@@ -11,7 +11,6 @@ PDF_READER=evince
 all:
 	mkdir -p $(BUILD_DIR)
 	latexmk -pdf -jobname=$(BUILD_DIR)/$(TARGET) $(SRC).tex
-	cp -f $(BUILD_DIR)/$(TARGET).pdf .
 
 index:
 	makeindex $(BUILD_DIR)/$(TARGET).nlo -s nomencl.ist -o $(BUILD_DIR)/$(TARGET).nls
