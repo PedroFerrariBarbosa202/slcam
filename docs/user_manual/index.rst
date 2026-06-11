@@ -1,0 +1,22 @@
+.. index.rst
+
+   Copyright The SLCam Contributors.
+
+   SLCam Documentation
+
+   This work is licensed under the Creative Commons Attribution-ShareAlike 4.0
+   International License. To view a copy of this license,
+   visit http://creativecommons.org/licenses/by-sa/4.0/.
+
+*****
+SLCam
+*****
+
+.. toctree::
+   :maxdepth: 3
+
+   introduction
+   hardware
+   firmware
+   operation
+   references
