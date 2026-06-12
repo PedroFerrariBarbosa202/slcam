@@ -28,39 +28,6 @@ The product tree of the firmware part of the SLCam module is available in :numre
 
       Product tree of the firmware of the SLCam module.
 
-Commands
-========
-
-To externally control and access the SLCam module, some commands are available through the serial interfaces of the board. A list with the commands is available in :numref:`tab:commands`. The format of the commands' answers can be seen in :numref:`tab:commands-ans`.
-
-.. _tab:commands:
-
-.. list-table:: List of commands.
-   :widths: 10 22 22 22
-   :header-rows: 1
-
-   * - **ID**
-     - **Name**
-     - **Content**
-     - **Interface**
-   * - 0
-     - Command
-     - TBD
-     - Interface
-
-.. _tab:commands-ans:
-
-.. list-table:: Format of the command's answers.
-   :widths: 10 45 45
-   :header-rows: 1
-
-   * - **ID**
-     - **Name**
-     - **Content**
-   * - 1
-     - TBD
-     - TBD
-
 Layers
 ======
 
@@ -107,15 +74,39 @@ Tasks are the FreeRTOS threads equivalent and are the uppermost abstraction laye
      - **Initial Delay [ms]**
      - **Period [ms]**
      - **Stack [bytes]**
-   * - Task 0
+   * - Startup
      - TBD
+     - 0
+     - Aperiodic
      - TBD
+   * - Watchdog Reset
+     - 1
+     - 0
+     - 100
      - TBD
+   * - Heartbeat
+     - 2
+     - 0
+     - 1000
+     - TBD
+   * - System Reset
+     - TBD
+     - 0
+     - 3600000
+     - TBD
+   * - Time Control
+     - TBD
+     - 0
+     - 1000
      - TBD
 
 Each of the tasks presented in :numref:`tab:firmware-tasks` is described below:
 
-* **Task 0**: TBD.
+* **Startup**: TODO.
+* **Watchdog Reset**: TODO.
+* **Heartbeat**: TODO.
+* **System Reset**: TODO.
+* **Time Control**: TODO.
 
 Libraries
 *********
