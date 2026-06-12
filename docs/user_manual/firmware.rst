@@ -75,38 +75,44 @@ Tasks are the FreeRTOS threads equivalent and are the uppermost abstraction laye
      - **Period [ms]**
      - **Stack [bytes]**
    * - Startup
-     - TBD
+     - Highest
      - 0
      - Aperiodic
-     - TBD
+     - 300
    * - Watchdog Reset
-     - 1
+     - Lowest
      - 0
      - 100
-     - TBD
+     - 150
    * - Heartbeat
-     - 2
-     - 0
-     - 1000
-     - TBD
+     - Lowest
+     - 2000
+     - 500
+     - 150
    * - System Reset
-     - TBD
+     - Medium
      - 0
      - 3600000
-     - TBD
+     - 150
    * - Time Control
+     - Medium
+     - 1000
+     - 1000
+     - 150
+   * - CSP Server
      - TBD
      - 0
-     - 1000
-     - TBD
+     - TBC
+     - TBC
 
 Each of the tasks presented in :numref:`tab:firmware-tasks` is described below:
 
-* **Startup**: TODO.
-* **Watchdog Reset**: TODO.
-* **Heartbeat**: TODO.
-* **System Reset**: TODO.
-* **Time Control**: TODO.
+* **Startup**: This task is the first executed task when the system starts. All devices, libraries, and data structures are initialized in this task. When the execution is done, the remaining tasks of the system are allowed to execute.
+* **Watchdog Reset**: This task resets the internal watchdog timer at every 100 ms. The internal watchdog has a maximum count time of 500 ms.
+* **Heartbeat**: The heartbeat task keeps blinking a LED at a rate of 1 Hz during the execution of the system. Its purpose is to give visual feedback on the execution of the scheduler. This task does not have a specific purpose on the flight version of the module (the flight version of the PCB does not have LEDs).
+* **System Reset**: This task resets the microcontroller by software every hour. This can be useful to clean up possible wrong values in variables, clean up the RAM, etc.
+* **Time Control**: This task is responsible for the time management of the system. At every second, it increments the system time (epoch). Also, it saves the current system time in the non-volatile memory every minute.
+* **CSP Server**: TODO.
 
 Libraries
 *********
