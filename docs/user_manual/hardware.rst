@@ -30,9 +30,6 @@ Specifications
 
 The SLCam has the image sensor module Arducam Mini 2MP Plus, one microcontroller (STM32F103C8T6) that run at a clock of **TBD**, a RAM of 20 kB (SRAM), a flash memory of **64 or 128KBytes**. The SLCam also has a CAN Transceiver, a switch and many connectors such as CAN connector, JTAG, SPI/3V3 and one for the image sensor.
 
-Image Sensor Connector
-**********************
-
 * **Sensor type**: RGB
 * **Pixel size**: 2.2 :math:`\times` 2.2 :math:`\mu` m
 * **Max. Resolution**: 1600 :math:`\times` 1200 px
