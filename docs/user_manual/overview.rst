@@ -1,4 +1,4 @@
-.. introduction.rst
+.. overview.rst
 
    Copyright The SLCam Contributors.
 
@@ -8,9 +8,9 @@
    International License. To view a copy of this license,
    visit http://creativecommons.org/licenses/by-sa/4.0/.
 
-************
-Introduction
-************
+********
+Overview
+********
 
 The SLCam is a controller for a image sensor module designed to be used in nanosatellite missions. The main object is to take pictures of the Earth from space. It's the first project from SpaceLab using cameras in payloads.
 

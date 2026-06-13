@@ -15,7 +15,7 @@ SLCam
 .. toctree::
    :maxdepth: 3
 
-   introduction
+   overview
    hardware
    firmware
    operation
