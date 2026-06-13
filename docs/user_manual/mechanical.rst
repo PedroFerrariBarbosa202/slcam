@@ -1,4 +1,4 @@
-.. pdf-index.rst
+.. mechanical.rst
 
    Copyright The SLCam Contributors.
 
@@ -8,12 +8,9 @@
    International License. To view a copy of this license,
    visit http://creativecommons.org/licenses/by-sa/4.0/.
 
-.. toctree::
-   :maxdepth: 3
+**********
+Mechanical
+**********
 
-   overview
-   hardware
-   firmware
-   mechanical
-   interfaces
-   references
+.. note::
+    TODO

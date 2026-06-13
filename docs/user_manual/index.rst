@@ -18,5 +18,6 @@ SLCam
    overview
    hardware
    firmware
-   operation
+   mechanical
+   interfaces
    references

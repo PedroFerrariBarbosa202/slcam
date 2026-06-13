@@ -1,0 +1,298 @@
+.. interfaces.rst
+
+   Copyright The SLCam Contributors.
+
+   SLCam Documentation
+
+   This work is licensed under the Creative Commons Attribution-ShareAlike 4.0
+   International License. To view a copy of this license,
+   visit http://creativecommons.org/licenses/by-sa/4.0/.
+
+**********
+Interfaces
+**********
+
+This chapter details the interfaces of the SLCam module, dividing them into three categories: electrical, software, and mechanical interfaces. Each of these categories is described in the following sections.
+
+Electrical
+==========
+
+All external electrical interfaces available to the user are listed in :numref:`tab:electrical-interfaces`, together with their location, connector type, and pinout.
+
+.. _tab:electrical-interfaces:
+
+.. list-table:: Electrical interfaces.
+   :widths: 12 12 33 14 14 15
+   :width: 100%
+   :align: center
+   :header-rows: 1
+
+   * 
+     - **Connector**
+     - **Purpose**
+     - **Image**
+     - **Interface**
+     - **Type**
+     - **Pins**
+   * 
+     - *J1*
+     - | Control/Data
+       | and power
+     - .. image:: img/arducam-2mp.png
+           :width: 4cm
+     - SPI/Power
+     - PicoBlade
+     - | 3V3
+       | GND
+       | MOSI
+       | MISO
+       | CLK
+       | CS
+   *
+     - *J3*
+     - Programming
+     - .. image:: img/arducam-2mp.png
+           :width: 4cm
+     - JTAG
+     - PinHeader
+     - | GND
+       | 3V3
+       | CLK
+       | DIO
+   *
+     - *CN5*
+     - Control/Data
+     - .. image:: img/arducam-2mp.png
+           :width: 4cm
+     - CAN
+     - PicoBlade
+     - | GND
+       | CAN High
+       | CAN Low
+   *
+     - *CN6*
+     - Debug
+     - .. image:: img/arducam-2mp.png
+           :width: 4cm
+     - UART
+     - PicoBlade
+     - | GND
+       | UART_TX
+       | UART_RX
+
+.. attention::
+   All pins presented in :numref:`tab:electrical-interfaces` operate at CMOS 3V3 voltage level!
+
+Software
+========
+
+Todas as interfaces de software do módulo estão associadas as interfaces elétricas apresentadas na seção anterior. Nas subseções a seguir, os parâmetros de configuração e características de cada interface estão descritas.
+
+Control/Data
+************
+
+The control and data interfaces allow commands to be sent and their respective responses to be received, in addition to enabling data transfer from the module to the host system, such as image transmission.
+
+Two interfaces are available for control and data transfer: the SPI and CAN interfaces. Therefore, both interfaces provide the same functionalities and enable redundant access to the device.
+
+The specifications required to communicate with these interfaces are described in :numref:`tab:control-spi-specs` and :numref:`tab:control-can-specs` (SPI and CAN, respectively).
+
+.. _tab:control-spi-specs:
+
+.. list-table:: Control/Data interface specifications (SPI port).
+   :widths: 20 20
+   :align: center
+   :header-rows: 1
+
+   * - **Parameter**
+     - **Value**
+   * - *PHY*
+     - SPI
+   * - *Signal Level*
+     - CMOS 3V3
+   * - *Mode*
+     - 0 (CPHA=0/CPOL=0)
+   * - *Baudrate*
+     - 500 kbps
+   * - *Data Link/Network Protocol*
+     - CSP
+   * - *Address*
+     - 10
+
+.. _tab:control-can-specs:
+
+.. list-table:: Control/Data interface specifications (CAN port).
+   :widths: 20 20
+   :align: center
+   :header-rows: 1
+
+   * - **Parameter**
+     - **Value**
+   * - *PHY*
+     - CAN
+   * - *Signal Level*
+     - CMOS 3V3
+   * - *Type*
+     - Standard CAN
+   * - *Baudrate*
+     - 500 kbps
+   * - *Data Link/Network Protocol*
+     - CSP
+   * - *Address*
+     - 11
+
+Both interfaces use the CSP protocol :cite:`csp` as the data link and network layer protocol. Commands and their respective responses are transmitted within the payload field of each CSP packet (transport layer), following the format descrided in the next section. In all CSP packets, the CRC flag must be enabled.
+
+Commands
+--------
+
+To externally control and access the SLCam module, some commands are available through the control/data interfaces of the board. A list with the commands is available in :numref:`tab:commands`. The format of the commands' answers can be seen in :numref:`tab:commands-ans`.
+
+.. _tab:commands:
+
+.. list-table:: List of commands.
+   :widths: 10 30 40 20
+   :align: center
+   :header-rows: 1
+
+   * - **ID**
+     - **Name**
+     - **Content**
+     - **Interface**
+   * - 0
+     - Read Parameter
+     - Param. ID (1 byte)
+     - SPI, CAN
+   * - 1
+     - Write Parameter
+     - Param. ID (1 byte), Param. Value (8 bytes)
+     - SPI, CAN
+   * - 2
+     - Read Image
+     - Image ID (4 bytes)
+     - SPI, CAN
+   * - 3
+     - Remove Image
+     - Image ID (4 bytes)
+     - SPI, CAN
+
+.. _tab:commands-ans:
+
+.. list-table:: Format of the command's answers.
+   :widths: 10 45 45
+   :align: center
+   :header-rows: 1
+
+   * - **ID**
+     - **Name**
+     - **Content**
+   * - 1
+     - TBD
+     - TBD
+
+Variables and Parameters
+------------------------
+
+.. _tab:parameters:
+
+.. list-table:: List of variables and parameters.
+   :widths: 10 40 15 15 20
+   :align: center
+   :header-rows: 1
+
+   * - **ID**
+     - **Name**
+     - **Access**
+     - **Type**
+     - **Length [bytes]**
+   * - 0
+     - Firmware version
+     - Read
+     - uint16
+     - 2
+   * - 1
+     - Hardware version
+     - Read
+     - uint16
+     - 2
+   * - 2
+     - System Time
+     - Read/Write
+     - uint32
+     - 4
+   * - 3
+     - Reset Counter
+     - Read
+     - uint32
+     - 4
+   * - 4
+     - Operation Mode
+     - Read/Write
+     - uint8
+     - 1
+   * - 5
+     - Number of Available Images
+     - Read
+     - uint16
+     - 2
+   * - 6
+     - Image Width
+     - Read/Write
+     - uint16
+     - 2
+   * - 7
+     - Image Height
+     - Read/Write
+     - uint16
+     - 2
+
+Debug
+*****
+
+The debug interface consists of a serial port where system log messages are written and configuration and operation commands can be sent, both through a command-line terminal interface. The communication specifications of this interface are described in :numref:`tab:debug-specs`.
+
+.. _tab:debug-specs:
+
+.. list-table:: Debug interface specifications.
+   :widths: 20 20
+   :align: center
+   :header-rows: 1
+
+   * - **Parameter**
+     - **Value**
+   * - *PHY*
+     - UART
+   * - *Signal Level*
+     - CMOS 3V3
+   * - *Baudrate*
+     - 115200 bps
+   * - *Data Bits*
+     - 8
+   * - *Stop Bits*
+     - 1
+   * - *Parity*
+     - None
+   * - *Flow Control*
+     - XON/XOFF
+
+An example of the output of this interface when the SLCam is connected to a computer and powered on can be seen in :numref:`fig:debug-example`.
+
+.. _fig:debug-example:
+
+.. figure:: img/putty-output.png
+      :width: 80%
+      :align: center
+      :alt: Debug output example
+
+      Debug interface output example.
+
+Programming
+***********
+
+To upload the firmware to the module, the programming interface must be used. This interface provides a JTAG port, where an ST-Link programmer must be connected for code uploading.
+
+Mechanical
+==========
+
+.. note::
+   TODO
