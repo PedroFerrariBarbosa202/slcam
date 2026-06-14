@@ -193,58 +193,121 @@ To externally control and access the SLCam module, some commands are available t
 Variables and Parameters
 ------------------------
 
+All variables and parameters available for reading and writing are listed in :numref:`tab:parameters`. Each variable/parameter has a unique ID and can be read by an external device. As shown, some variables can also be written.
+
 .. _tab:parameters:
 
 .. list-table:: List of variables and parameters.
-   :widths: 10 40 15 15 20
+   :widths: 10 25 25 15 15 10
+   :width: 100%
    :align: center
    :header-rows: 1
 
    * - **ID**
      - **Name**
+     - **Description**
      - **Access**
      - **Type**
-     - **Length [bytes]**
+     - | **Length**
+       | **[bytes]**
    * - 0
      - Firmware version
+     - v1.2.3=0x00010203
      - Read
      - uint16
      - 2
    * - 1
      - Hardware version
+     - v1.2.3=0x00010203
      - Read
      - uint16
      - 2
    * - 2
      - System Time
+     - Epoch in seconds
      - Read/Write
      - uint32
      - 4
    * - 3
      - Reset Counter
+     - Resets since factory reset
      - Read
      - uint32
      - 4
    * - 4
      - Operation Mode
+     - TBD
      - Read/Write
      - uint8
      - 1
    * - 5
-     - Number of Available Images
+     - | Number of Available
+       | Images
+     - Images in memory
      - Read
      - uint16
      - 2
    * - 6
-     - Image Width
+     - Image Size
+     - | 0=160x120,
+       | 1=176x144,
+       | 2=320x240,
+       | 3=352x288,
+       | 4=640x480,
+       | 5=800x600,
+       | 6=1024x768,
+       | 7=1280x1024,
+       | 8=1600x1200
      - Read/Write
-     - uint16
-     - 2
+     - uint8
+     - 1
    * - 7
-     - Image Height
+     - Light Mode
+     - | 0=Auto,
+       | 1=Sunny,
+       | 2=Cloudy,
+       | 3=Office,
+       | 4=Home
      - Read/Write
-     - uint16
-     - 2
+     - uint8
+     - 1
+   * - 8
+     - Color Saturation
+     - | 0=Saturation 0,
+       | 1=Saturation 1,
+       | 2=Saturation 2
+     - Read/Write
+     - uint8
+     - 1
+   * - 9
+     - Brightness
+     - | 0=Brightness 0,
+       | 1=Brightness 1,
+       | 2=Brightness 2
+     - Read/Write
+     - uint8
+     - 1
+   * - 10
+     - Contrast
+     - | 0=Contrast 0,
+       | 1=Contrast 1,
+       | 2=Contrast 2
+     - Read/Write
+     - uint8
+     - 1
+   * - 11
+     - Special Effect
+     - | 0=Antique,
+       | 1=Bluish,
+       | 2=Greenish,
+       | 3=Reddish,
+       | 4=Black and White,
+       | 5=Negative,
+       | 6=Negative Black and White,
+       | 7=Normal
+     - Read/Write
+     - uint8
+     - 1
 
 Debug
 *****
