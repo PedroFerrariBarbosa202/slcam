@@ -76,7 +76,7 @@ The internal architecture of the Arducam Mini 2MP Plus module is illustrated in 
       :align: center
       :alt: Block diagram Arducam
 
-      Architecture of the Arducam Mini 2MP Plus.
+      Block diagram of the Arducam Mini 2MP Plus.
 
 The image sensor is connected to the ArduChip through a dedicated camera interface, responsible for receiving pixel data and synchronization signals. Internally, the ArduChip includes a Frame Buffer Finite State Machine (FSM) and memory timing control logic, which manage the storage and retrieval of image data from the external FIFO memory. This architecture allows complete image frames to be temporarily buffered before being transmitted to the host microcontroller.
 
@@ -179,7 +179,7 @@ The controller board PCB was developed using the KiCad v5 tool :cite:`kicad` and
 
 The PCB was designed using standard FR-4 material with a total thickness of 1.6 mm. The engineering model uses a HASL (Hot Air Solder Leveling) surface finish, while the flight model is planned to use an ENIG (Electroless Nickel Immersion Gold) finish to improve corrosion resistance and soldering reliability. No special dielectric or impedance-controlled stack-up requirements were necessary for the current design.
 
-Mechanically, the controller board measures 42.2 :math:`\times` 25.4 mm and includes four mounting holes with a diameter of 3.2 mm, allowing secure integration into the payload mechanical structure. The compact dimensions of the PCB contribute to the reduced size and mass of the SLCam module, making it suitable for small satellite and embedded imaging applications.
+Mechanically, the controller board measures 41.7 :math:`\times` 27.4 mm and includes four mounting holes with a diameter of 3.2 mm, allowing secure integration into the payload mechanical structure. The compact dimensions of the PCB contribute to the reduced size and mass of the SLCam module, making it suitable for small satellite and embedded imaging applications.
 
 Top and bottom views of the controller board are presented in :numref:`fig:controller-board-top-bottom`, highlighting the component placement and routing distribution across the PCB layers.
 
@@ -204,3 +204,25 @@ Top and bottom views of the controller board are presented in :numref:`fig:contr
         :alt: Bottom view.
 
     Controller board top and bottom view.
+
+Integration Between the Image Sensor and the Controller Board
+=============================================================
+
+The SLCam module is composed of two independent electronic boards: the Arducam Mini 2MP Plus image sensor board and the custom-developed controller board. The integration between these two boards is illustrated in :numref:`fig:boards-integration`.
+
+.. _fig:boards-integration:
+
+.. figure:: img/boards-integration.png
+   :width: 60%
+   :align: center
+   :alt: Boards integration
+
+   Integration between the Arducam image sensor board and the controller board.
+
+The controller board is positioned below the image sensor module and is responsible for power distribution, communication management, image acquisition control, and external interfacing of the SLCam module. The Arducam board is mounted above the controller board using metallic spacers that provide mechanical support, structural rigidity, and controlled spacing between the two PCBs.
+
+The electrical connection between both boards is performed through a vertical pin header interface. Through this connector, the controller board provides the required 3V3 power supply to the image sensor module and establishes the SPI and I\ :sup:`2`\ C communication buses used for image transfer and camera configuration. The SPI interface is responsible for image data acquisition from the ArduChip FIFO memory, while the I\ :sup:`2`\ C bus is used for configuring the OV2640 image sensor registers and operating parameters.
+
+As shown in :numref:`fig:boards-integration`, the optical axis of the camera module is aligned with the center of the mechanical enclosure opening, allowing unobstructed image acquisition. The stacked PCB arrangement contributes to reducing the overall footprint of the payload while maintaining accessibility to the external electrical interfaces located on the controller board.
+
+Additionally, insulating foam spacers are positioned between the boards to reduce mechanical vibrations, minimize stress concentration during assembly, and prevent unintended contact between electronic components mounted on opposite PCB surfaces. This integration approach results in a compact, lightweight, and mechanically robust imaging subsystem suitable for embedded and nanosatellite applications.
