@@ -38,47 +38,47 @@ All external electrical interfaces available to the user are listed in :numref:`
      - *J1*
      - | Control/Data
        | and power
-     - .. image:: img/arducam-2mp.png
+     - .. image:: img/j1-pins.png
            :width: 4cm
      - SPI/Power
      - PicoBlade
-     - | 3V3
-       | GND
-       | MOSI
-       | MISO
-       | CLK
-       | CS
+     - | 1=3V3
+       | 2=GND
+       | 3=MISO
+       | 4=MOSI
+       | 5=CLK
+       | 6=CS
    *
      - *J3*
      - Programming
-     - .. image:: img/arducam-2mp.png
+     - .. image:: img/j3-pins.png
            :width: 4cm
      - JTAG
      - PinHeader
-     - | GND
-       | 3V3
-       | CLK
-       | DIO
+     - | 1=DIO
+       | 2=CLK
+       | 3=3V3
+       | 4=GND
    *
-     - *CN5*
+     - *J4*
      - Control/Data
-     - .. image:: img/arducam-2mp.png
+     - .. image:: img/j4-pins.png
            :width: 4cm
      - CAN
      - PicoBlade
-     - | GND
-       | CAN High
-       | CAN Low
+     - | 1=GND
+       | 2=CAN High
+       | 3=CAN Low
    *
-     - *CN6*
+     - *J5*
      - Debug
-     - .. image:: img/arducam-2mp.png
+     - .. image:: img/j5-pins.png
            :width: 4cm
      - UART
      - PicoBlade
-     - | GND
-       | UART_TX
-       | UART_RX
+     - | 1=GND
+       | 2=UART_RX
+       | 3=UART_TX
 
 .. attention::
    All pins presented in :numref:`tab:electrical-interfaces` operate at CMOS 3V3 voltage level!
@@ -168,10 +168,22 @@ To externally control and access the SLCam module, some commands are available t
      - Param. ID (1 byte), Param. Value (8 bytes)
      - SPI, CAN
    * - 2
+     - Capture Single Image
+     - None
+     - SPI, CAN
+   * - 3
+     - Start Automatic Capture
+     - None
+     - SPI, CAN
+   * - 4
+     - Stop Automatic Capture
+     - None
+     - SPI, CAN
+   * - 5
      - Read Image
      - Image ID (4 bytes)
      - SPI, CAN
-   * - 3
+   * - 6
      - Remove Image
      - Image ID (4 bytes)
      - SPI, CAN
@@ -357,5 +369,26 @@ To upload the firmware to the module, the programming interface must be used. Th
 Mechanical
 ==========
 
-.. note::
-   TODO
+The SLCam module provides two main external mechanical interfaces: the mounting structure and the optical interface of the camera lens. These interfaces are responsible for enabling the mechanical integration of the payload into the satellite structure while also providing the required optical access for image acquisition.
+
+For structural integration, the module includes four 3.2 mm diameter through holes designed for the use of standard M3 screws. These mounting holes allow the SLCam to be securely attached to the satellite structure or to external support fixtures during integration and testing activities. The location of the mounting holes on the mechanical case is illustrated in :numref:`fig:mounting-holes`.
+
+.. _fig:mounting-holes:
+
+.. figure:: img/mounting-holes.png
+      :width: 75%
+      :align: center
+      :alt: Mounting holes
+
+      Mounting holes of the SLCam case.
+
+The relative spacing and distances between the mounting holes are presented in :numref:`fig:mounting-holes-distance`. These dimensions are important for the mechanical integration of the payload and must be considered during the design of the satellite support structure and assembly interfaces.
+
+.. _fig:mounting-holes-distance:
+
+.. figure:: img/mounting-holes-distance.png
+      :width: 80%
+      :align: center
+      :alt: Mounting holes distance
+
+      Distance between the mounting holes.
