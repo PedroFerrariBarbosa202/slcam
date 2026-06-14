@@ -1,4 +1,4 @@
-.. index.rst
+.. usage.rst
 
    Copyright The SLCam Contributors.
 
@@ -8,17 +8,12 @@
    International License. To view a copy of this license,
    visit http://creativecommons.org/licenses/by-sa/4.0/.
 
-*****
-SLCam
-*****
+******************
+Usage Instructions
+******************
 
-.. toctree::
-   :maxdepth: 3
+Firmware Upload
+===============
 
-   overview
-   hardware
-   firmware
-   mechanical
-   interfaces
-   usage
-   references
+.. note::
+   TODO

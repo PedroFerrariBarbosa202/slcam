@@ -16,4 +16,5 @@
    firmware
    mechanical
    interfaces
+   usage
    references
