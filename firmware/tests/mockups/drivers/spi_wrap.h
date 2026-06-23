@@ -1,5 +1,5 @@
 /*
- * config.h
+ * spi_wrap.h
  * 
  * Copyright The SLCam Contributors.
  * 
@@ -21,27 +21,37 @@
  */
 
 /**
- * \brief Configuration parameters definition.
+ * \brief SPI driver wrap definition.
  * 
  * \author Gabriel Mariano Marcelino <gabriel.mm8@gmail.com>
  * 
- * \version 0.2.7
+ * \version 0.2.10
  * 
- * \date 2024/01/13
+ * \date 2024/02/13
  * 
- * \defgroup config Configuration
+ * \defgroup spi_wrap SPI Wrap
+ * \ingroup tests
  * \{
  */
 
-#ifndef CONFIG_H_
-#define CONFIG_H_
+#ifndef SPI_WRAP_H_
+#define SPI_WRAP_H_
 
-#define CONFIG_OS_IS_FREERTOS
+#include <stdint.h>
+#include <stdbool.h>
 
-/* Tasks */
-#define CONFIG_TASK_HEARTBEAT_ENABLED 1
-#define CONFIG_STARTUP_ENABLED 1
+#include <drivers/spi/spi.h>
 
-#endif /* CONFIG_H_ */
+int __wrap_spi_init(spi_port_t port, spi_config_t config);
 
-/** \} End of config group */
+int __wrap_spi_select_slave(spi_port_t port, spi_cs_t cs, bool active);
+
+int __wrap_spi_write(spi_port_t port, spi_cs_t cs, uint8_t *data, uint16_t len);
+
+int __wrap_spi_read(spi_port_t port, spi_cs_t cs, uint8_t *data, uint16_t len);
+
+int __wrap_spi_transfer(spi_port_t port, spi_cs_t cs, uint8_t *wd, uint8_t *rd, uint16_t len);
+
+#endif /* SPI_WRAP_H_ */
+
+/** \} End of spi_wrap group */

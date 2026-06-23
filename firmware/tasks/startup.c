@@ -36,7 +36,9 @@
 #include <stdbool.h>
 
 #include <config/config.h>
+#include <config/errno.h>
 #include <system/sys_log/sys_log.h>
+#include <devices/tps2044/tps2044.h>
 
 #include "startup.h"
 
@@ -46,31 +48,44 @@ EventGroupHandle_t task_startup_status;
 
 void vTaskStartup(void *pvParameters)
 {
-    bool error = false;
+	uint32_t err_num = 0;
+	int err = 0;
 
-    /* Logger device initialization */
-    sys_log_init();
+	/* Logger device initialization */
+	sys_log_init();
 
-    /* Print the FreeRTOS version */
-    sys_log_print_event_from_module(SYS_LOG_INFO, TASK_STARTUP_NAME, "FreeRTOS ");
-    sys_log_print_msg(tskKERNEL_VERSION_NUMBER);
-    sys_log_new_line();
+	/* Print the FreeRTOS version */
+	sys_log_print_event_from_module(SYS_LOG_INFO, TASK_STARTUP_NAME, "FreeRTOS ");
+	sys_log_print_msg(tskKERNEL_VERSION_NUMBER);
+	sys_log_new_line();
 
-    if (error)
-    {
-        sys_log_print_event_from_module(SYS_LOG_ERROR, TASK_STARTUP_NAME, "Boot completed with ERRORS!");
-        sys_log_new_line();
-    }
-    else
-    {
-        sys_log_print_event_from_module(SYS_LOG_INFO, TASK_STARTUP_NAME, "Boot completed with SUCCESS!");
-        sys_log_new_line();
-    }
+	err = image_sensor_supply_switch_init();
 
-    /* Startup task status = Done */
-    xEventGroupSetBits(task_startup_status, TASK_STARTUP_DONE);
+	if (err < 0) {
+		sys_log_print_event_from_module(
+			SYS_LOG_ERROR, TASK_STARTUP_NAME,
+			"Failed to initialize image sensor power switch! Errno: ");
+		sys_log_print_msg(errno_to_string(err));
+		sys_log_new_line();
+		++err_num;
+	}
 
-    vTaskSuspend(xTaskStartupHandle);
+	if (err_num > 0) {
+		sys_log_print_event_from_module(SYS_LOG_ERROR, TASK_STARTUP_NAME,
+						"Boot completed with ");
+		sys_log_print_uint(err_num);
+		sys_log_print_msg(" ERRORS!");
+		sys_log_new_line();
+	} else {
+		sys_log_print_event_from_module(SYS_LOG_INFO, TASK_STARTUP_NAME,
+						"Boot completed with SUCCESS!");
+		sys_log_new_line();
+	}
+
+	/* Startup task status = Done */
+	xEventGroupSetBits(task_startup_status, TASK_STARTUP_DONE);
+
+	vTaskSuspend(xTaskStartupHandle);
 }
 
 /** \} End of startup group */

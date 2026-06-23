@@ -1,5 +1,5 @@
 /*
- * config.h
+ * spi_wrap.c
  * 
  * Copyright The SLCam Contributors.
  * 
@@ -16,32 +16,48 @@
  * GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with SLCam. If not, see <http://www.gnu.org/licenses/>.
+ * along with SLCam. If not, see <http:/\/www.gnu.org/licenses/>.
  * 
  */
 
 /**
- * \brief Configuration parameters definition.
+ * \brief SPI driver wrap implementation.
  * 
  * \author Gabriel Mariano Marcelino <gabriel.mm8@gmail.com>
  * 
- * \version 0.2.7
+ * \version 0.2.10
  * 
- * \date 2024/01/13
+ * \date 2024/02/13
  * 
- * \defgroup config Configuration
+ * \addtogroup spi_wrap
  * \{
  */
 
-#ifndef CONFIG_H_
-#define CONFIG_H_
+#include "spi.h"
 
-#define CONFIG_OS_IS_FREERTOS
+int __wrap_spi_select_slave(spi_port_t port, spi_cs_t cs, bool active)
+{
+    return -1;
+}
 
-/* Tasks */
-#define CONFIG_TASK_HEARTBEAT_ENABLED 1
-#define CONFIG_STARTUP_ENABLED 1
+int __wrap_spi_init(spi_port_t port, spi_config_t config)
+{
+    return -1;
+}
 
-#endif /* CONFIG_H_ */
+int __wrap_spi_write(spi_port_t port, spi_cs_t cs, uint8_t *data, uint16_t len)
+{
+    return -1;
+}
 
-/** \} End of config group */
+int __wrap_spi_read(spi_port_t port, spi_cs_t cs, uint8_t *data, uint16_t len)
+{
+    return -1;
+}
+
+int __wrap_spi_transfer(spi_port_t port, spi_cs_t cs, uint8_t *wd, uint8_t *rd, uint16_t len)
+{
+    return -1;
+}
+
+/** \} End of spi_wrap group */
