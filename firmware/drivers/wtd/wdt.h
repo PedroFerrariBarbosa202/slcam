@@ -48,7 +48,7 @@
 /**
  * \brief Watchdog period in miliseconds.
  */
-#define DEFAULT_WTD_PERIOD_MS 1000 // review values
+#define DEFAULT_WTD_PERIOD_MS 500
 
 /**
  * \brief Watchdog configuration.
