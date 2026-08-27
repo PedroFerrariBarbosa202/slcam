@@ -40,6 +40,7 @@
 #include "ov2640/ov2640.h"
 #include "uart/uart.h"
 #include "w25qxx/src/driver_w25qxx.h"
+#include "wdt/wdt.h"
 
 #endif /* DRIVERS_H_ */
 
