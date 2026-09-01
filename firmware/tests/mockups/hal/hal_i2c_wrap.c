@@ -36,6 +36,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <setjmp.h>
 #include <float.h>
@@ -83,6 +84,11 @@ void __wrap_i2c_transfer7(uint32_t i2c, uint8_t addr, const uint8_t *w, size_t w
         }
     }
     
+}
+
+unsigned int generate_random(unsigned int l, unsigned int r)
+{
+    return (rand() % (r - l + 1)) + l;
 }
 
 

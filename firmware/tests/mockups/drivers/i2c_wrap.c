@@ -49,7 +49,8 @@ int __wrap_i2c_init(i2c_port_t port, i2c_config_t config)
     check_expected(port);
     check_expected(config.speed_hz);
 
-    return mock_type(int);}
+    return mock_type(int);
+}
 
 int __wrap_i2c_write(i2c_port_t port, i2c_slave_adr_t adr, uint8_t *data, uint16_t len)
 {

@@ -62,7 +62,7 @@ int i2c_init(i2c_port_t port, i2c_config_t config){
 
     if (err == 0)
     {
-        uint16_t base_address = UINT16_MAX;
+        uint32_t base_address = UINT32_MAX;
 
         // in both port cases, SDA and SCL will be on port B
         rcc_periph_clock_enable(RCC_GPIOB);
@@ -104,13 +104,14 @@ int i2c_init(i2c_port_t port, i2c_config_t config){
             i2c_peripheral_enable(base_address);
         }
     }
-
+    
+    return err;
 }
 
 int i2c_write(i2c_port_t port, i2c_slave_adr_t adr, uint8_t *data, uint16_t len){
     int err = 0;
 
-    uint16_t base_address = UINT16_MAX;
+    uint32_t base_address = UINT32_MAX;
 
     switch(port)
     {
@@ -136,7 +137,7 @@ int i2c_write(i2c_port_t port, i2c_slave_adr_t adr, uint8_t *data, uint16_t len)
 int i2c_read(i2c_port_t port, i2c_slave_adr_t adr, uint8_t *data, uint16_t len){
     int err = 0;
 
-    uint16_t base_address = UINT16_MAX;
+    uint32_t base_address = UINT32_MAX;
 
     switch(port)
     {

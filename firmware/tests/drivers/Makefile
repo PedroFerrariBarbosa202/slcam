@@ -13,7 +13,7 @@ CFLAGS = -fpic -std=c99 -Wall -pedantic \
          -Wcast-qual \
          -Wstrict-prototypes \
          -Wmissing-prototypes \
-         -DSTM32F4 \
+         -DSTM32F1 \
          -I$(INC) \
          -I../../tests/freertos_sim \
          -I../../hal/include

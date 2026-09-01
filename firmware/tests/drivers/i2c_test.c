@@ -74,8 +74,8 @@ static void i2c_read_test(void** state){
 
     uint16_t len = 7;
 
-    assert_return_code(i2c_write(I2C_PORT_0, SLAVE_ADDR, data, len), -1);
-    assert_memory_equal(data, not_expected, len);
+    assert_return_code(i2c_read(I2C_PORT_0, SLAVE_ADDR, data, len), -1);
+    assert_memory_not_equal(data, not_expected, len);
 }
 
 int main(void)
@@ -90,9 +90,4 @@ int main(void)
     };
 
     return cmocka_run_group_tests(i2c_tests, NULL, NULL);
-}
-
-unsigned int generate_random(unsigned int l, unsigned int r)
-{
-    return (rand() % (r - l + 1)) + l;
 }
