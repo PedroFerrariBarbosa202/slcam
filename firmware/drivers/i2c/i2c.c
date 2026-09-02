@@ -1,60 +1,161 @@
 /*
  * i2c.c
  * 
- * Copyright The SLCam Contributors.
+ * Copyright The OBDH 2.0 Contributors.
  * 
- * This file is part of SLCam.
+ * This file is part of OBDH 2.0.
  * 
- * SLCam is free software: you can redistribute it and/or modify
+ * OBDH 2.0 is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
- * SLCam is distributed in the hope that it will be useful,
+ * OBDH 2.0 is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU General Public License
- * along with SLCam. If not, see <http:/\/www.gnu.org/licenses/>.
+ * along with OBDH 2.0. If not, see <http:/\/www.gnu.org/licenses/>.
  * 
  */
 
 /**
  * \brief I2C driver implementation.
  * 
- * \author Vitória Beatriz Bianchin <vitoriabbianchin@gmail.com>
+ * \author Pedro Ferrari Barbosa <pedro.ferraribarbosa2007@gmail.com>
+ * \author Gabriel Mariano Marcelino <gabriel.mm8@gmail.com>
  * 
- * \version 0.0.1
+ * \version 1.0.0
  * 
- * \date 2023/07/20
+ * \date 2026/08/27
  * 
  * \addtogroup i2c
  * \{
  */
 
-#include <hal/usci_b_i2c.h>
-#include <hal/gpio.h>
-#include <hal/ucs.h>
+
+#include <libopencm3/stm32/rcc.h>
+#include <libopencm3/stm32/gpio.h>
 
 #include <config/config.h>
 #include <system/sys_log/sys_log.h>
-
 #include "i2c.h"
 
-int i2c_init(i2c_port_t port, i2c_config_t config)
-{
+int i2c_init(i2c_port_t port, i2c_config_t config){
+    int err = 0;
+
+    switch(config.speed_hz)
+    {
+        case i2c_speed_sm_100k:      break;
+        case i2c_speed_fm_400k:      break;
+        case i2c_speed_fmp_1m:       break;
+        case i2c_speed_unknown:
+        default:
+        #if defined(CONFIG_DRIVERS_DEBUG_ENABLED) && (CONFIG_DRIVERS_DEBUG_ENABLED == 1)
+            sys_log_print_event_from_module(SYS_LOG_ERROR, I2C_MODULE_NAME, "Invalid transfer rate!");
+            sys_log_new_line();
+        #endif /* CONFIG_DRIVERS_DEBUG_ENABLED */
+            err = -1;   /* Invalid transfer rate */
+            break;
+    }
+
+    if (err == 0)
+    {
+        uint32_t base_address = UINT32_MAX;
+
+        // in both port cases, SDA and SCL will be on port B
+        rcc_periph_clock_enable(RCC_GPIOB);
+
+        // initially disable the peripheral so it can be configured
+        i2c_peripheral_disable(I2C1);
+
+        switch(port)
+        {
+            case I2C_PORT_0:
+                base_address = I2C1_BASE;
+                gpio_set_mode(GPIOB, 
+                    GPIO_MODE_OUTPUT_50_MHZ, 
+                    GPIO_CNF_OUTPUT_ALTFN_OPENDRAIN, 
+                    GPIO6 | GPIO7);
+                break;
+            case I2C_PORT_1:
+                base_address = I2C2_BASE;
+                gpio_set_mode(GPIOB, 
+                    GPIO_MODE_OUTPUT_50_MHZ, 
+                    GPIO_CNF_OUTPUT_ALTFN_OPENDRAIN, 
+                    GPIO10 | GPIO11);
+                break;
+            default:
+            #if defined(CONFIG_DRIVERS_DEBUG_ENABLED) && (CONFIG_DRIVERS_DEBUG_ENABLED == 1)
+                sys_log_print_event_from_module(SYS_LOG_ERROR, I2C_MODULE_NAME, "Invalid port!");
+                sys_log_new_line();
+            #endif /* CONFIG_DRIVERS_DEBUG_ENABLED */
+                err = -1;   /* Invalid I2C port */
+                break;
+        }
+
+        if(err == 0){
+            i2c_set_clock_frequency(base_address, config.clock_freq_mhz);
+            i2c_set_speed(base_address, config.speed_hz, config.clock_freq_mhz);
+            i2c_set_own_7bit_slave_address(base_address, I2C_SLAVE_OWN_7BIT_ADDR);
+            i2c_enable_ack(base_address);
+
+            i2c_peripheral_enable(base_address);
+        }
+    }
     
+    return err;
 }
 
-int i2c_write(i2c_port_t port, i2c_slave_adr_t adr, uint8_t *data, uint16_t len)
-{
-   
+int i2c_write(i2c_port_t port, i2c_slave_adr_t adr, uint8_t *data, uint16_t len){
+    int err = 0;
+
+    uint32_t base_address = UINT32_MAX;
+
+    switch(port)
+    {
+        case I2C_PORT_0:
+            base_address = I2C1_BASE;
+            break;
+        case I2C_PORT_1:
+            base_address = I2C2_BASE;
+            break;
+        default:
+        #if defined(CONFIG_DRIVERS_DEBUG_ENABLED) && (CONFIG_DRIVERS_DEBUG_ENABLED == 1)
+            sys_log_print_event_from_module(SYS_LOG_ERROR, I2C_MODULE_NAME, "Invalid port!");
+            sys_log_new_line();
+        #endif /* CONFIG_DRIVERS_DEBUG_ENABLED */
+            err = -1;   /* Invalid I2C port */
+            return err;
+    }
+
+    i2c_transfer7(base_address, adr, data, len, NULL, 0);
+    return err;
 }
 
-int i2c_read(i2c_port_t port, i2c_slave_adr_t adr, uint8_t *data, uint16_t len)
-{
-   
-}
+int i2c_read(i2c_port_t port, i2c_slave_adr_t adr, uint8_t *data, uint16_t len){
+    int err = 0;
 
-/** \} End of i2c group */
+    uint32_t base_address = UINT32_MAX;
+
+    switch(port)
+    {
+        case I2C_PORT_0:
+            base_address = I2C1_BASE;
+            break;
+        case I2C_PORT_1:
+            base_address = I2C2_BASE;
+            break;
+        default:
+        #if defined(CONFIG_DRIVERS_DEBUG_ENABLED) && (CONFIG_DRIVERS_DEBUG_ENABLED == 1)
+            sys_log_print_event_from_module(SYS_LOG_ERROR, I2C_MODULE_NAME, "Invalid port!");
+            sys_log_new_line();
+        #endif /* CONFIG_DRIVERS_DEBUG_ENABLED */
+            err = -1;   /* Invalid I2C port */
+            return err;
+    }
+
+    i2c_transfer7(base_address, adr, NULL, 0, data, len);
+    return err;
+}
