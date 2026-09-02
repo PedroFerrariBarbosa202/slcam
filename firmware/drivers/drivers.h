@@ -41,6 +41,7 @@
 #include "uart/uart.h"
 #include "w25qxx/src/driver_w25qxx.h"
 #include "spi/spi.h"
+#include "i2c/i2c.h"
 
 #endif /* DRIVERS_H_ */
 
