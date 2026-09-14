@@ -8,6 +8,9 @@ tags
 *.ctu-info
 cppcheck-addon-ctu-file-list
 
+# VSCode
+.vscode/
+
 # Compilation Files
 *.o
 *.a

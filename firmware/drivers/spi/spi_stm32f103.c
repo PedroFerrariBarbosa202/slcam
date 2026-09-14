@@ -35,6 +35,9 @@
 #include <stdint.h>
 #include <config/errno.h>
 #include <hal/include/libopencm3/stm32/spi.h>
+#include <hal/include/libopencm3/stm32/gpio.h>
+#include <hal/include/libopencm3/stm32/rcc.h>
+
 
 #include "spi.h"
 
@@ -62,17 +65,88 @@ static inline uint32_t port_to_base_address(const enum spi_port port)
 static int spi_stm32_init(struct spi_controller *controller,
 			  const struct spi_config *config, const enum spi_port port)
 {
+	int err = 0;
 	uint32_t port_addr = port_to_base_address(port);
 
-	if (port_addr == UINT32_MAX)
+	if (port_addr == UINT32_MAX){
 		return -ERRNO_DRIVER_NO_PORT;
+	}
+
+	uint32_t c_pol = UINT32_MAX;
+
+	switch(config->mode){
+		case SPI_MODE_0: case SPI_MODE_1:		c_pol = SPI_CR1_CPOL_CLK_TO_0_WHEN_IDLE; break;
+		case SPI_MODE_2: case SPI_MODE_3:		c_pol = SPI_CR1_CPOL_CLK_TO_1_WHEN_IDLE; break;
+		default:{
+			#if defined(CONFIG_DRIVERS_DEBUG_ENABLED) && (CONFIG_DRIVERS_DEBUG_ENABLED == 1)
+            	sys_log_print_event_from_module(SYS_LOG_ERROR, SPI_MODULE_NAME, "Invalid SPI mode!");
+            	sys_log_new_line();
+        	#endif /* CONFIG_DRIVERS_DEBUG_ENABLED */
+            err = -1;   /* Invalid SPI mode */
+            return err;
+		}
+	}
+
+	uint32_t c_phase = UINT32_MAX;
+
+	switch(config->mode){
+		case SPI_MODE_0: case SPI_MODE_2:		c_phase = SPI_CR1_CPHA_CLK_TRANSITION_1; break;
+		case SPI_MODE_1: case SPI_MODE_3:		c_phase = SPI_CR1_CPHA_CLK_TRANSITION_2; break;
+		default:{
+			#if defined(CONFIG_DRIVERS_DEBUG_ENABLED) && (CONFIG_DRIVERS_DEBUG_ENABLED == 1)
+            	sys_log_print_event_from_module(SYS_LOG_ERROR, SPI_MODULE_NAME, "Invalid SPI mode!");
+            	sys_log_new_line();
+        	#endif /* CONFIG_DRIVERS_DEBUG_ENABLED */
+            err = -1;   /* Invalid SPI mode */
+            return err;
+		}
+	}
+
+	switch(port_addr){
+		case(SPI1_BASE):{
+			rcc_periph_clock_enable(RCC_SPI1);
+
+			gpio_set_mode(GPIOA, 
+				GPIO_MODE_OUTPUT_50_MHZ, 
+				GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, 
+				GPIO4 | GPIO5 | GPIO6 | GPIO7);
+			
+			spi_reset(SPI1);
+
+			spi_init_master(SPI1, 
+				SPI_CR1_BAUDRATE_FPCLK_DIV_16, 
+				c_pol, 
+				c_phase,
+				SPI_CR1_DFF_8BIT, 
+				SPI_CR1_MSBFIRST);
+			
+			/* software NSS management */
+    		spi_enable_software_slave_management(SPI1);
+    		spi_set_nss_high(SPI1);
+
+    		spi_enable(SPI1);
+			
+		}break;
+	}
 
 	return 0;
 }
 
 static int spi_stm32_configure(struct spi_controller *controller,
-			       struct spi_config *config);
+			       struct spi_config *config)
+{
+	if(config == NULL || controller == NULL) {
+		return -ERRNO_MISC_INVALID_ARG;
+	}
+	
+	controller->config = *config;
+
+	return 0;
+}
+
 static int spi_stm32_write(struct spi_device *dev, uint8_t *buf, size_t len);
+
+
 static int spi_stm32_read(struct spi_device *dev, uint8_t *buf, size_t len);
 static int spi_stm32_transfer(struct spi_device *dev, uint8_t *tx_buf,
 			      size_t tx_len, uint8_t *rx_buf, size_t rx_len);
