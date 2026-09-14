@@ -38,7 +38,6 @@
 #include <hal/include/libopencm3/stm32/gpio.h>
 #include <hal/include/libopencm3/stm32/rcc.h>
 
-
 #include "spi.h"
 
 static inline uint32_t port_to_base_address(const enum spi_port port)
@@ -110,24 +109,50 @@ static int spi_stm32_init(struct spi_controller *controller,
 				GPIO_MODE_OUTPUT_50_MHZ, 
 				GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, 
 				GPIO4 | GPIO5 | GPIO6 | GPIO7);
-			
-			spi_reset(SPI1);
-
-			spi_init_master(SPI1, 
-				SPI_CR1_BAUDRATE_FPCLK_DIV_16, 
-				c_pol, 
-				c_phase,
-				SPI_CR1_DFF_8BIT, 
-				SPI_CR1_MSBFIRST);
-			
-			/* software NSS management */
-    		spi_enable_software_slave_management(SPI1);
-    		spi_set_nss_high(SPI1);
-
-    		spi_enable(SPI1);
-			
 		}break;
+
+		case(SPI2_BASE):{
+			rcc_periph_clock_enable(RCC_SPI2);
+
+			gpio_set_mode(GPIOA, 
+				GPIO_MODE_OUTPUT_50_MHZ, 
+				GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, 
+				GPIO4 | GPIO5 | GPIO6 | GPIO7);
+		}break;
+
+		case(SPI3_BASE):{
+			rcc_periph_clock_enable(RCC_SPI3);
+
+			gpio_set_mode(GPIOA, 
+				GPIO_MODE_OUTPUT_50_MHZ, 
+				GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, 
+				GPIO4 | GPIO5 | GPIO6 | GPIO7);
+		}break;
+
+		defalt: {
+			#if defined(CONFIG_DRIVERS_DEBUG_ENABLED) && (CONFIG_DRIVERS_DEBUG_ENABLED == 1)
+            	sys_log_print_event_from_module(SYS_LOG_ERROR, SPI_MODULE_NAME, "Invalid SPI port!");
+            	sys_log_new_line();
+        	#endif /* CONFIG_DRIVERS_DEBUG_ENABLED */
+            err = -1;   /* Invalid SPI port */
+            return err;
+		}
 	}
+
+	spi_reset(port_addr);
+
+	spi_init_master(port_addr, 
+		SPI_CR1_BAUDRATE_FPCLK_DIV_16, 
+		c_pol, 
+		c_phase,
+		SPI_CR1_DFF_8BIT, 
+		SPI_CR1_MSBFIRST);
+			
+	/* software NSS management */
+    spi_enable_software_slave_management(port_addr);
+    spi_set_nss_high(port_addr);
+
+    spi_enable(port_addr);
 
 	return 0;
 }
