@@ -39,6 +39,7 @@
 #include <hal/include/libopencm3/stm32/rcc.h>
 
 #include "spi.h"
+#include "system.h"
 
 static inline uint32_t port_to_base_address(const enum spi_port port)
 {
@@ -59,6 +60,34 @@ static inline uint32_t port_to_base_address(const enum spi_port port)
 	}
 
 	return addr;
+}
+
+uint32_t spi_get_prescaler(uint32_t speed_hz)
+{
+    uint32_t pclk = SYSTEM_CLOCK_FREQ_HZ;
+
+    if (speed_hz >= pclk / 2)
+        return SPI_CR1_BAUDRATE_FPCLK_DIV_2;
+
+    if (speed_hz >= pclk / 4)
+        return SPI_CR1_BAUDRATE_FPCLK_DIV_4;
+
+    if (speed_hz >= pclk / 8)
+        return SPI_CR1_BAUDRATE_FPCLK_DIV_8;
+
+    if (speed_hz >= pclk / 16)
+        return SPI_CR1_BAUDRATE_FPCLK_DIV_16;
+
+    if (speed_hz >= pclk / 32)
+        return SPI_CR1_BAUDRATE_FPCLK_DIV_32;
+
+    if (speed_hz >= pclk / 64)
+        return SPI_CR1_BAUDRATE_FPCLK_DIV_64;
+
+    if (speed_hz >= pclk / 128)
+        return SPI_CR1_BAUDRATE_FPCLK_DIV_128;
+
+    return SPI_CR1_BAUDRATE_FPCLK_DIV_256;
 }
 
 static int spi_stm32_init(struct spi_controller *controller,
@@ -140,6 +169,7 @@ static int spi_stm32_init(struct spi_controller *controller,
 	}
 
 	spi_reset(port_addr);
+	spi_set_dff_8bit(port_addr);
 
 	spi_init_master(port_addr, 
 		SPI_CR1_BAUDRATE_FPCLK_DIV_16, 
@@ -148,13 +178,13 @@ static int spi_stm32_init(struct spi_controller *controller,
 		SPI_CR1_DFF_8BIT, 
 		SPI_CR1_MSBFIRST);
 			
-	/* software NSS management */
+	/* software Chip Select management */
     spi_enable_software_slave_management(port_addr);
     spi_set_nss_high(port_addr);
 
     spi_enable(port_addr);
 
-	return 0;
+	return ERRNO_SUCCESS;
 }
 
 static int spi_stm32_configure(struct spi_controller *controller,
@@ -163,23 +193,113 @@ static int spi_stm32_configure(struct spi_controller *controller,
 	if(config == NULL || controller == NULL) {
 		return -ERRNO_MISC_INVALID_ARG;
 	}
+
+	uint32_t port_addr = port_to_base_address(controller->port);
+	uint32_t baudrate_prescaler = spi_get_prescaler(config->speed_hz);
 	
 	controller->config = *config;
 
-	return 0;
+	spi_set_standard_mode(port_addr, config->mode);
+	spi_set_baudrate_prescaler(port_addr, baudrate_prescaler);
+
+	return ERRNO_SUCCESS;
 }
 
-static int spi_stm32_write(struct spi_device *dev, uint8_t *buf, size_t len);
+static int spi_stm32_write(struct spi_device *dev, uint8_t *buf, size_t len){
+	if(dev == NULL || buf == NULL){
+		return ERRNO_MISC_INVALID_ARG;
+	}
 
+	uint32_t port_addr = port_to_base_address(dev->controller->port);
 
-static int spi_stm32_read(struct spi_device *dev, uint8_t *buf, size_t len);
-static int spi_stm32_transfer(struct spi_device *dev, uint8_t *tx_buf,
-			      size_t tx_len, uint8_t *rx_buf, size_t rx_len);
-static int spi_stm32_select_slave(struct spi_device *dev, bool slave_state);
-static int spi_stm32_write_only(struct spi_device *dev, uint8_t *buf,
-				size_t len);
-static int spi_stm32_read_only(struct spi_device *dev, uint8_t *buf,
-			       size_t len);
+	/* change CS state */
+	spi_set_nss_low(port_addr);
+
+	spi_stm32_write_only(dev, buf, len);
+
+	/* change CS state */
+	spi_set_nss_high(port_addr);
+	return ERRNO_SUCCESS;
+}
+
+static int spi_stm32_read(struct spi_device *dev, uint8_t *buf, size_t len){
+	if(dev == NULL || buf == NULL){
+		return ERRNO_MISC_INVALID_ARG;
+	}
+
+	uint32_t port_addr = port_to_base_address(dev->controller->port);
+
+	/* change CS state */
+	spi_set_nss_low(port_addr);
+
+	spi_stm32_read_only(dev, buf, len);
+
+	/* change CS state */
+	spi_set_nss_high(port_addr);
+	return ERRNO_SUCCESS;
+}
+
+static int spi_stm32_transfer(struct spi_device *dev, uint8_t *tx_buf, size_t tx_len, uint8_t *rx_buf, size_t rx_len){
+	if(dev == NULL || tx_buf == NULL || rx_buf == NULL){
+		return -1;
+	}
+
+	int errno = 0;
+	uint32_t bytes_read = 0;
+
+	if(rx_len > 0){
+		bytes_read = spi_stm32_read(dev, rx_buf, rx_len);
+	}
+
+	if(tx_len > 0){
+		errno = spi_stm32_write(dev, tx_buf, tx_len);
+	}
+
+	if(errno != 0) return errno;
+	else return bytes_read;
+}
+
+static int spi_stm32_select_slave(struct spi_device *dev, bool slave_state){
+	if(dev == NULL){
+		return ERRNO_MISC_INVALID_ARG;
+	}
+
+	uint32_t port_addr = port_to_base_address(dev->controller->port);
+
+	dev->cs_active_level = slave_state;
+	spi_set_nss_low(port_addr);
+
+	return ERRNO_SUCCESS;
+}
+
+static int spi_stm32_write_only(struct spi_device *dev, uint8_t *buf, size_t len){
+	if(dev == NULL || buf == NULL){
+		return ERRNO_MISC_INVALID_ARG;
+	}
+
+	uint32_t port_addr = port_to_base_address(dev->controller->port);
+
+	for(uint16_t i = 0; i < len; i++){
+		spi_send(port_addr, buf[i]);
+	}
+
+	return ERRNO_SUCCESS;
+}
+
+static int spi_stm32_read_only(struct spi_device *dev, uint8_t *buf, size_t len){
+	if(dev == NULL || buf == NULL){
+		return ERRNO_MISC_INVALID_ARG;
+	}
+
+	uint32_t port_addr = port_to_base_address(dev->controller->port);
+	uint32_t bytes_read = 0;
+
+	for(uint16_t i = 0; i < len; i++){
+		buf[i] = spi_read(port_addr);
+	}
+
+	return bytes_read;
+}
 
 static struct spi_driver_api stm32_spi_api = {
 	.init = spi_stm32_init,
