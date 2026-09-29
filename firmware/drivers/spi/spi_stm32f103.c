@@ -91,7 +91,7 @@ uint32_t spi_get_prescaler(uint32_t speed_hz)
 }
 
 static int spi_stm32_init(struct spi_controller *controller,
-			  const struct spi_config *config, const enum spi_port port)
+	     const struct spi_config *config, const enum spi_port port)
 {
 	int err = 0;
 	uint32_t port_addr = port_to_base_address(port);
@@ -103,8 +103,8 @@ static int spi_stm32_init(struct spi_controller *controller,
 	uint32_t c_pol = UINT32_MAX;
 
 	switch(config->mode){
-		case SPI_MODE_0: case SPI_MODE_1:		c_pol = SPI_CR1_CPOL_CLK_TO_0_WHEN_IDLE; break;
-		case SPI_MODE_2: case SPI_MODE_3:		c_pol = SPI_CR1_CPOL_CLK_TO_1_WHEN_IDLE; break;
+		case SPI_MODE_0: case SPI_MODE_1:   c_pol = SPI_CR1_CPOL_CLK_TO_0_WHEN_IDLE; break;
+		case SPI_MODE_2: case SPI_MODE_3:   c_pol = SPI_CR1_CPOL_CLK_TO_1_WHEN_IDLE; break;
 		default:{
 			#if defined(CONFIG_DRIVERS_DEBUG_ENABLED) && (CONFIG_DRIVERS_DEBUG_ENABLED == 1)
             	sys_log_print_event_from_module(SYS_LOG_ERROR, SPI_MODULE_NAME, "Invalid SPI mode!");
