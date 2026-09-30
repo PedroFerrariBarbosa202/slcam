@@ -47,6 +47,14 @@
 
 #include <config/errno.h>
 
+static error_t return_error(int val){
+  return (error_t)val;
+}
+
+static void check_errno_test(void **state){
+  assert_int_equal(return_error(1), ERROR_DRIVER_NO_PORT);
+}
+
 static void errno_get_string_test(void** state){
   error_t error = ERROR_DRIVER_FAILED;
   assert_string_equal(error_as_string(error), "ERROR_DRIVER_FAILED");
@@ -55,7 +63,8 @@ static void errno_get_string_test(void** state){
 int main(void)
 {
     const struct CMUnitTest errno_tests[] = {
-        cmocka_unit_test(errno_get_string_test)
+        cmocka_unit_test(errno_get_string_test),
+        cmocka_unit_test(check_errno_test)
     };
 
     return cmocka_run_group_tests(errno_tests, NULL, NULL);
