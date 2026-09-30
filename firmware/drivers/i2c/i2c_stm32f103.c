@@ -50,21 +50,23 @@ static inline uint32_t port_to_base_address(const enum spi_port port)
 		addr = I2C1_BASE;
   }break;
 	case I2C_PORT_1:{
-		addr == I2C2_BASE;
+		addr = I2C2_BASE;
   }break;
 	default:
+    addr = ERROR_DRIVER_NO_PORT;
 		break;
 	} 
 
 	return addr;
 }
 
-static int i2c_stm32_init(struct i2c_controller *controller,
+static error_t i2c_stm32_init(struct i2c_controller *controller,
 	     const struct i2c_config *config, const enum i2c_port port)
 {
-  int err = 0;
+  error_t err = ERROR_SUCCESS;
+
   if(controller == NULL || config == NULL){
-    return -ERRNO_MISC_INVALID_ARG;
+    return -ERROR_MISC_INVALID_ARG;
   }
 
   switch(config->speed_hz)
@@ -84,23 +86,21 @@ static int i2c_stm32_init(struct i2c_controller *controller,
 
     if (err == 0)
     {
-        uint32_t base_address = UINT32_MAX;
+        uint32_t base_address = port_to_base_address(dev->controller->port);
 
         /*in both port cases, SDA and SCL will be on port B*/
         rcc_periph_clock_enable(RCC_GPIOB);
 
 
-        switch(port)
+        switch(base_address)
         {
-            case I2C_PORT_0:
-                base_address = I2C1_BASE;
+            case I2C1_BASE:
                 gpio_set_mode(GPIOB, 
                     GPIO_MODE_OUTPUT_50_MHZ, 
                     GPIO_CNF_OUTPUT_ALTFN_OPENDRAIN, 
                     GPIO6 | GPIO7);
                 break;
-            case I2C_PORT_1:
-                base_address = I2C2_BASE;
+            case I2C2_BASE:
                 gpio_set_mode(GPIOB, 
                     GPIO_MODE_OUTPUT_50_MHZ, 
                     GPIO_CNF_OUTPUT_ALTFN_OPENDRAIN, 
@@ -131,56 +131,66 @@ static int i2c_stm32_init(struct i2c_controller *controller,
     return err;
 }
 
-static int spi_stm32_configure(struct spi_controller *controller,
-			       struct spi_config *config)
+static error_t i2c_stm32_configure(struct i2c_controller *controller,
+			       struct i2c_config *config)
 {
+  if(controller == NULL || config == NULL){
+    return -ERRNO_MISC_INVALID_ARG;
+  }
+
+  uint32_t base_address = port_to_base_address(controller->port);
+
+  if(base_address == ERROR_DRIVER_NO_PORT){
+    return -ERROR_DRIVER_NO_PORT;
+  }
+
+  /*initially disable the peripheral so it can be configured*/
+  i2c_peripheral_disable(base_address);
+
+  i2c_set_clock_frequency(base_address, config->clock_freq_mhz);
+  i2c_set_speed(base_address, config->speed_hz, config->clock_freq_mhz);
+  
+  i2c_peripheral_enable(base_address);
+
 	return ERRNO_SUCCESS;
 }
 
-static int spi_stm32_write(struct spi_device *dev, i2c_slave_adr_t adr, uint8_t *buf, size_t len){
-	  int err = 0;
+static error_t i2c_stm32_write(struct i2c_device *dev, i2c_slave_adr_t adr, uint8_t *buf, size_t len){
+	  error_t err = ERROR_SUCCESS;
 
-    uint32_t base_address = UINT32_MAX;
+    uint32_t base_address = port_to_base_address(dev->controller->port);
 
-    switch(dev->controller->port)
-    {
-        case I2C_PORT_0:
-            base_address = I2C1_BASE;
-            break;
-        case I2C_PORT_1:
-            base_address = I2C2_BASE;
-            break;
-        default:
-        #if defined(CONFIG_DRIVERS_DEBUG_ENABLED) && (CONFIG_DRIVERS_DEBUG_ENABLED == 1)
-            sys_log_print_event_from_module(SYS_LOG_ERROR, I2C_MODULE_NAME, "Invalid port!");
-            sys_log_new_line();
-        #endif /* CONFIG_DRIVERS_DEBUG_ENABLED */
-            err = -1;   /* Invalid I2C port */
-            return err;
+    if(base_address == ERROR_DRIVER_NO_PORT){
+      return -ERROR_DRIVER_NO_PORT;
     }
 
-    i2c_transfer7(base_address, adr, data, len, NULL, 0);
+    i2c_transfer7(base_address, adr, buf, len, NULL, 0);
     return err;
 }
 
-static int spi_stm32_read(struct spi_device *dev, ui2c_slave_adr_t adr, int8_t *buf, size_t len){
+static error_t i2c_stm32_read(struct i2c_device *dev, i2c_slave_adr_t adr, int8_t *buf, size_t len){
+    int err = 0;
+
+    uint32_t base_address = port_to_base_address(dev->controller->port);
+
+    if(base_address == ERROR_DRIVER_NO_PORT){
+      return -ERROR_DRIVER_NO_PORT;
+    }
+
+    i2c_transfer7(base_address, adr, NULL, 0, buf, len);
+    return err;
 }
 
-static struct i2c_driver_api stm32_spi_api = {
+static struct i2c_driver_api stm32_i2c_api = {
 	.init = spi_stm32_init,
-	.select_slave = spi_stm32_select_slave,
 	.configure = spi_stm32_configure,
 	.write = spi_stm32_write,
-	.write_only = spi_stm32_write_only,
 	.read = spi_stm32_read,
-	.read_only = spi_stm32_read_only,
-	.transfer = spi_stm32_transfer,
 };
 
 static struct i2c_controller stm32_controller_list[] = {
-	[SPI_PORT_0] = { 0 },
-	[SPI_PORT_1] = { 0 },
-	[SPI_PORT_2] = { 0 },
+	[I2C_PORT_0] = { 0 },
+	[I2C_PORT_1] = { 0 },
 };
 
 struct i2c_controller *i2c_hw_get_controller_handle(enum spi_port port)
