@@ -52,12 +52,12 @@ static error_t return_error(int val){
 }
 
 static void check_errno_test(void **state){
-  assert_int_equal(return_error(1), ERROR_DRIVER_NO_PORT);
+  assert_int_equal(return_error(1), ERRNO_DRIVER_NO_PORT);
 }
 
 static void errno_get_string_test(void** state){
-  error_t error = ERROR_DRIVER_FAILED;
-  assert_string_equal(error_as_string(error), "ERROR_DRIVER_FAILED");
+  error_t error = ERRNO_DRIVER_FAILED;
+  assert_string_equal(error_as_string(error), "ERRNO_DRIVER_FAILED");
 }
 
 int main(void)
