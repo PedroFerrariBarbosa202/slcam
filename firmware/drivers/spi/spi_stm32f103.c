@@ -39,7 +39,7 @@
 #include <hal/include/libopencm3/stm32/rcc.h>
 
 #include "spi.h"
-#include "system.h"
+#include "system/system.h"
 
 static inline uint32_t port_to_base_address(const enum spi_port port)
 {
@@ -205,6 +205,35 @@ static int spi_stm32_configure(struct spi_controller *controller,
 	return ERRNO_SUCCESS;
 }
 
+static int spi_stm32_write_only(struct spi_device *dev, uint8_t *buf, size_t len){
+	if(dev == NULL || buf == NULL){
+		return ERRNO_MISC_INVALID_ARG;
+	}
+
+	uint32_t port_addr = port_to_base_address(dev->controller->port);
+
+	for(uint16_t i = 0; i < len; i++){
+		spi_send(port_addr, buf[i]);
+	}
+
+	return ERRNO_SUCCESS;
+}
+
+static int spi_stm32_read_only(struct spi_device *dev, uint8_t *buf, size_t len){
+	if(dev == NULL || buf == NULL){
+		return ERRNO_MISC_INVALID_ARG;
+	}
+
+	uint32_t port_addr = port_to_base_address(dev->controller->port);
+	uint32_t bytes_read = 0;
+
+	for(uint16_t i = 0; i < len; i++){
+		buf[i] = spi_read(port_addr);
+	}
+
+	return bytes_read;
+}
+
 static int spi_stm32_write(struct spi_device *dev, uint8_t *buf, size_t len){
 	if(dev == NULL || buf == NULL){
 		return ERRNO_MISC_INVALID_ARG;
@@ -272,34 +301,6 @@ static int spi_stm32_select_slave(struct spi_device *dev, bool slave_state){
 	return ERRNO_SUCCESS;
 }
 
-static int spi_stm32_write_only(struct spi_device *dev, uint8_t *buf, size_t len){
-	if(dev == NULL || buf == NULL){
-		return ERRNO_MISC_INVALID_ARG;
-	}
-
-	uint32_t port_addr = port_to_base_address(dev->controller->port);
-
-	for(uint16_t i = 0; i < len; i++){
-		spi_send(port_addr, buf[i]);
-	}
-
-	return ERRNO_SUCCESS;
-}
-
-static int spi_stm32_read_only(struct spi_device *dev, uint8_t *buf, size_t len){
-	if(dev == NULL || buf == NULL){
-		return ERRNO_MISC_INVALID_ARG;
-	}
-
-	uint32_t port_addr = port_to_base_address(dev->controller->port);
-	uint32_t bytes_read = 0;
-
-	for(uint16_t i = 0; i < len; i++){
-		buf[i] = spi_read(port_addr);
-	}
-
-	return bytes_read;
-}
 
 static struct spi_driver_api stm32_spi_api = {
 	.init = spi_stm32_init,
