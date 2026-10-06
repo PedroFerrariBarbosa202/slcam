@@ -168,6 +168,8 @@ static int spi_stm32_init(struct spi_controller *controller,
 		}
 	}
 
+	uint32_t baudrate_prescaler = spi_get_prescaler(config->speed_hz);
+
 	spi_reset(port_addr);
 	spi_set_dff_8bit(port_addr);
 
@@ -177,12 +179,15 @@ static int spi_stm32_init(struct spi_controller *controller,
 		c_phase,
 		SPI_CR1_DFF_8BIT, 
 		SPI_CR1_MSBFIRST);
-			
-	/* software Chip Select management */
-    spi_enable_software_slave_management(port_addr);
-    spi_set_nss_high(port_addr);
+  
 
-    spi_enable(port_addr);
+	spi_set_baudrate_prescaler(port_addr, baudrate_prescaler);
+
+	/* software Chip Select management */
+  spi_enable_software_slave_management(port_addr);
+  spi_set_nss_high(port_addr);
+
+  spi_enable(port_addr);
 
 	return ERRNO_SUCCESS;
 }

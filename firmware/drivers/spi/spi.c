@@ -70,7 +70,7 @@ int spi_init_controller(struct spi_controller **controller, enum spi_port port,
 	if (!api)
 		return -ERRNO_MISC_UNSUPPORTED_OP;
 
-	err = mutex_init(&ctrl->lock);
+	//err = mutex_init(&ctrl->lock);
 
 	if (err < 0)
 		return err;
@@ -142,7 +142,7 @@ int spi_select_slave(struct spi_device *dev, bool state)
 	if (!dev || !dev->controller)
 		return -ERRNO_MISC_INVALID_ARG;
 
-	err = mutex_lock(&controller->lock);
+//	err = mutex_lock(&controller->lock);
 
 	if (err < 0)
 		return err;
@@ -162,14 +162,14 @@ int spi_device_write(struct spi_device *dev, uint8_t *buf, size_t len)
 	if (!dev || !dev->controller)
 		return -ERRNO_MISC_INVALID_ARG;
 
-	err = mutex_lock(&controller->lock);
+//	err = mutex_lock(&controller->lock);
 
 	if (err < 0)
 		return err;
 
 	err = controller->api.write(dev, buf, len);
 
-	mutex_unlock(&controller->lock);
+//	mutex_unlock(&controller->lock);
 
 	return err;
 }
@@ -182,14 +182,14 @@ int spi_device_write_only(struct spi_device *dev, uint8_t *buf, size_t len)
 	if (!dev || !dev->controller)
 		return -ERRNO_MISC_INVALID_ARG;
 
-	err = mutex_lock(&controller->lock);
+//	err = mutex_lock(&controller->lock);
 
 	if (err < 0)
 		return err;
 
 	err = controller->api.write_only(dev, buf, len);
 
-	mutex_unlock(&controller->lock);
+//	mutex_unlock(&controller->lock);
 
 	return err;
 }
@@ -202,14 +202,14 @@ int spi_device_read(struct spi_device *dev, uint8_t *buf, size_t len)
 	if (!dev || !dev->controller)
 		return -ERRNO_MISC_INVALID_ARG;
 
-	err = mutex_lock(&controller->lock);
+//	err = mutex_lock(&controller->lock);
 
 	if (err < 0)
 		return err;
 
 	err = controller->api.read(dev, buf, len);
 
-	mutex_unlock(&controller->lock);
+//	mutex_unlock(&controller->lock);
 
 	return err;
 }
@@ -222,14 +222,14 @@ int spi_device_read_only(struct spi_device *dev, uint8_t *buf, size_t len)
 	if (!dev || !dev->controller)
 		return -ERRNO_MISC_INVALID_ARG;
 
-	err = mutex_lock(&controller->lock);
+//	err = mutex_lock(&controller->lock);
 
 	if (err < 0)
 		return err;
 
 	err = controller->api.read_only(dev, buf, len);
 
-	mutex_unlock(&controller->lock);
+//	mutex_unlock(&controller->lock);
 
 	return err;
 }
@@ -243,14 +243,14 @@ int spi_device_transfer(struct spi_device *dev, uint8_t *tx_buf, size_t tx_len, 
 	if (!dev || !dev->controller)
 		return -ERRNO_MISC_INVALID_ARG;
 
-	err = mutex_lock(&controller->lock);
+//	err = mutex_lock(&controller->lock);
 
 	if (err < 0)
 		return err;
 
 	err = controller->api.transfer(dev, tx_buf, tx_len, rx_buf, rx_len);
 
-	mutex_unlock(&controller->lock);
+//	mutex_unlock(&controller->lock);
 
 	return err;
 }
