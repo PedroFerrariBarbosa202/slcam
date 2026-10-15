@@ -18,6 +18,7 @@ SYSTEM_DIR			:= ../../system
 CONFIG_DIR      := ../../config
 FREERTOS_DIR    := ../../os/include/
 SPI_DRIVER_DIR 	:= ../../drivers/spi
+GPIO_DRIVER_DIR 	:= ../../drivers/gpio
 OPENCM3_DIR     := ../../hal
 
 #------------------------------------------------------------------------------
@@ -83,6 +84,7 @@ TGT_CPPFLAGS += $(DEFS)
 
 TGT_CPPFLAGS += -I$(OPENCM3_DIR)/include
 TGT_CPPFLAGS += -I$(SPI_DRIVER_DIR)
+TGT_CPPFLAGS += -I$(GPIO_DRIVER_DIR)
 TGT_CPPFLAGS += -I$(FIRMWARE_DIR)
 TGT_CPPFLAGS += -I$(FREERTOS_DIR)
 TGT_CPPFLAGS += -I$(FREERTOS_DIR)/../portable/GCC/ARM_CM3
@@ -124,6 +126,9 @@ LDLIBS += -Wl,--end-group
 OBJS += $(BINARY).o
 OBJS += $(SPI_DRIVER_DIR)/spi.o
 OBJS += $(SPI_DRIVER_DIR)/spi_stm32f103.o
+
+OBJS += $(GPIO_DRIVER_DIR)/gpio.o
+OBJS += $(GPIO_DRIVER_DIR)/gpio_stm32f103.o
 
 #------------------------------------------------------------------------------
 # Targets
