@@ -35,34 +35,34 @@
  * \{
  */
 
-
 #ifndef I2C_H_
 #define I2C_H_
 
+#include <errno.h>
 #include <stdint.h>
 #include <libopencm3/cm3/memorymap.h>
 #include <libopencm3/stm32/i2c.h>
+#include <config/errno.h>
 
 #include <utils/mutex/mutex.h>
 
-#define I2C_MODULE_NAME         "I2C"
+#define I2C_MODULE_NAME "I2C"
 
-#define I2C_SLAVE_OWN_7BIT_ADDR      (0x00)
+#define I2C_SLAVE_OWN_7BIT_ADDR (0x00)
 
-typedef enum
-{
-    I2C_PORT_0=0,       /**< I2C port 0. */
-    I2C_PORT_1,         /**< I2C port 1. */
-} i2c_port_t;
+typedef enum i2c_port {
+	I2C_PORT_0 = 0, /**< I2C port 0. */
+	I2C_PORT_1, /**< I2C port 1. */
+} i2c_port;
 
-typedef struct{
-    uint32_t speed_hz;  /**< Transfer rate in bps (choose between 100k, 400k and 1m)*/
-    uint32_t clock_freq_mhz;   /**< clock frequency in MHz*/
-}i2c_config_t;
+typedef struct i2c_config {
+	uint32_t speed_hz; /**< Transfer rate in bps (choose between 100k, 400k and 1m)*/
+	uint32_t clock_freq_mhz; /**< clock frequency in MHz*/
+} i2c_config;
 
 /**
  * \brief I2C slave 7-bit address.
- */ 
+ */
 typedef uint8_t i2c_slave_adr_t;
 
 /**
@@ -78,31 +78,32 @@ struct i2c_controller;
 /**
  *\brief i2c driver api
  */
-struct i2c_driver_api{
-  int (*init)(struct i2c_controller *controller, const struct i2c_config_t *config,
-      const enum i2c_port_t port);
-  int (*configure)(struct i2c_controller *controller, struct i2c_config *config);
-  int (*write)(struct i2c_device *dev, i2c_slave_adr_t adr, uint8_t *buf, size_t len);
-  int (*read)(struct i2c_device *dev, i2c_slave_adr_t adr, uint8_t *buf, size_t len);
-}
+struct i2c_driver_api {
+	error_t (*init)(struct i2c_controller *controller, const struct i2c_config *config,
+			const enum i2c_port port);
+	error_t (*configure)(struct i2c_controller *controller, struct i2c_config *config);
+	error_t (*write)(struct i2c_device *dev, i2c_slave_adr_t adr, uint8_t *buf, size_t len);
+	error_t (*read)(struct i2c_device *dev, i2c_slave_adr_t adr, uint8_t *buf, size_t len);
+};
 
 /**
  * \brief i2c controller struct
  */
 struct i2c_controller {
-  struct i2c_driver_api api;
-  struct i2c_config cofig;
-  struct mutex lock;
-  uint8_t port;
-  uint8_t initialized;
-}
+	struct i2c_driver_api api;
+	struct i2c_config config;
+	struct mutex lock;
+	uint8_t port;
+	uint8_t initialized;
+};
 
 /**
  * \brief i2c device struct;
  */
-struct i2c_device{
-  struct i2c_controller *controller;
-}
+struct i2c_device {
+	struct i2c_controller *controller;
+	i2c_slave_adr_t slave_addr;
+};
 
 /**
  * \brief Initializes an I2C controller, configures it and populate its struct.
@@ -119,8 +120,8 @@ struct i2c_device{
  *
  * \return The status/error code.
  */
-int i2c_init_controller(struct i2c_controller **controller, const enum i2c_port port,
-			const struct i2c_config *config);
+error_t i2c_init_controller(struct i2c_controller **controller, const enum i2c_port port,
+			    const struct i2c_config *config);
 
 /**
  * \brief Configures an I2C controller. It assumes that the controller is 
@@ -132,7 +133,7 @@ int i2c_init_controller(struct i2c_controller **controller, const enum i2c_port 
  *
  * \return The status/error code.
  */
-int i2c_configure_controller(struct i2c_controller *controller, struct i2c_config *config);
+error_t i2c_configure_controller(struct i2c_controller *controller, struct i2c_config *config);
 
 /**
  * \brief Initializes a I2C device.
@@ -150,9 +151,12 @@ int i2c_configure_controller(struct i2c_controller *controller, struct i2c_confi
  *
  * \param[in] cs_active_level is the SPI chip select active level.
  *
+ * \param[in] cs_active_level is the SPI chip select active level.
+ *
  * \return The status/error code.
  */
-int i2c_init_device(struct i2c_device *dev, enum i2c_port port, const struct i2c_config *config);
+error_t i2c_init_device(struct i2c_device *dev, enum i2c_port port,
+			const struct i2c_config *config);
 
 /**
  * \brief Write to a I2C device.
@@ -165,7 +169,7 @@ int i2c_init_device(struct i2c_device *dev, enum i2c_port port, const struct i2c
  *
  * \return The status/error code.
  */
-int i2c_device_write(struct i2c_device *dev, uint8_t *buf, size_t len);
+error_t i2c_device_write(struct i2c_device *dev, i2c_slave_adr_t addr, uint8_t *buf, size_t len);
 
 /**
  * \brief Read from a I2C device.
@@ -179,6 +183,37 @@ int i2c_device_write(struct i2c_device *dev, uint8_t *buf, size_t len);
  * \return The number of bytes read, if errors occured the function returns 
  * negative numbers.
  */
-int i2c_device_read(struct i2c_device *dev, uint8_t *buf, size_t len);
+error_t i2c_device_read(struct i2c_device *dev, i2c_slave_adr_t addr, uint8_t *buf, size_t len);
+
+/**
+ * \brief Get hardware specific i2c driver functions struct. THIS FUNCTION 
+ * SHOULD BE IMPLEMENTED FOR EACH CPU, otherwise the driver does not work.
+ *
+ * \return The struct containing the hardware specific functions. 
+ */
+extern struct i2c_driver_api *i2c_hw_get_driver(void);
+
+/**
+ * \brief Get hardware specific controller instances, this is done to provide 
+ * a `singleton` like controllers to avoid concurrency issues. THIS FUNCTION
+ * SHOULD BE IMPLEMENTED FOR EACH CPU, otherwise the driver does not work. It 
+ * could be implemented simply by: 
+ *
+ * static struct spi_controller *controller_list[] = {
+ *      [I2C_PORT_0] = &spi_controller_0,
+ *      [I2C_PORT_1] = &spi_controller_1,
+ *      ...
+ *      [I2C_PORT_5] = &spi_controller_5,
+ * }
+ *
+ * struct i2c_controller *i2c_hw_get_controller_handle(enum i2c_port port) {
+ *      return controller_list[port];
+ * }
+ *
+ * \param[in] port is the hardware port to identify the controller.
+ *
+ * \return The struct containing the matching controller handle.
+ */
+extern struct i2c_controller *i2c_hw_get_controller_handle(enum i2c_port port);
 
 #endif // I2C_H_

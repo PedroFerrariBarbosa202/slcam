@@ -34,15 +34,16 @@
  * \{
  */
 
+#include "errno.h"
+#include <errno.h>
 #include <stdint.h>
-#include <config/errno.h>
 #include <utils/mutex/mutex.h>
 #include <drivers/gpio/gpio.h>
 
 #include "i2c.h"
 
-error_t i2c_init_controller(struct i2c_controller **controller, enum i2c_port port,
-			const struct i2c_config *config)
+error_t i2c_init_controller(struct i2c_controller **controller, const enum i2c_port port,
+			    const struct i2c_config *config)
 {
 	struct i2c_driver_api *api;
 	struct i2c_controller *ctrl;
@@ -59,7 +60,7 @@ error_t i2c_init_controller(struct i2c_controller **controller, enum i2c_port po
 	*controller = ctrl;
 
 	if (ctrl->initialized == 1)
-		return ERROR_SUCCESS;
+		return ERRNO_SUCCESS;
 
 	/* This check is in here to enable config to be NULL, if the controller 
      * is already be initialized. */
@@ -71,7 +72,7 @@ error_t i2c_init_controller(struct i2c_controller **controller, enum i2c_port po
 	if (!api)
 		return -ERRNO_MISC_UNSUPPORTED_OP;
 
-	err = mutex_init(&ctrl->lock);
+	// err = mutex_init(&ctrl->lock);
 
 	if (err < 0)
 		return err;
@@ -89,9 +90,9 @@ error_t i2c_init_controller(struct i2c_controller **controller, enum i2c_port po
 	return 0;
 }
 
-int i2c_configure_controller(struct i2c_controller *controller, struct i2c_config *config)
+error_t i2c_configure_controller(struct i2c_controller *controller, struct i2c_config *config)
 {
-	int err;
+	error_t err = ERRNO_SUCCESS;
 
 	if (!config || !controller)
 		return -ERRNO_MISC_INVALID_ARG;
@@ -109,36 +110,25 @@ int i2c_configure_controller(struct i2c_controller *controller, struct i2c_confi
 	return 0;
 }
 
-int i2c_init_device(struct spi_device *dev, enum spi_port port, const struct spi_config *config,
-		    const uint8_t cs_pin, const uint8_t cs_active_level)
+error_t i2c_init_device(struct i2c_device *dev, enum i2c_port port, const struct i2c_config *config)
 {
-	int err;
+	error_t err = ERRNO_SUCCESS;
 
 	if (!dev)
 		return -ERRNO_MISC_INVALID_ARG;
 
-	err = spi_init_controller(&dev->controller, port, config);
+	err = i2c_init_controller(&dev->controller, port, config);
 
 	if (err < 0)
 		return err;
-
-	err = gpio_init_pin(cs_pin, GPIO_DRV_MODE_OUTPUT_PUSH_PULL);
-
-	if (err < 0)
-		return err;
-
-	gpio_set_state(cs_pin, !cs_active_level);
-
-	dev->cs = cs_pin;
-	dev->cs_active_level = cs_active_level;
 
 	return 0;
 }
 
-int spi_select_slave(struct spi_device *dev, bool state)
+error_t i2c_device_write(struct i2c_device *dev, i2c_slave_adr_t addr, uint8_t *buf, size_t len)
 {
-	struct spi_controller *controller = dev->controller;
-	int err;
+	struct i2c_controller *controller = dev->controller;
+	error_t err = ERRNO_SUCCESS;
 
 	if (!dev || !dev->controller)
 		return -ERRNO_MISC_INVALID_ARG;
@@ -148,17 +138,17 @@ int spi_select_slave(struct spi_device *dev, bool state)
 	if (err < 0)
 		return err;
 
-	err = controller->api.select_slave(dev, state);
+	err = controller->api.write(dev, addr, buf, len);
 
 	mutex_unlock(&controller->lock);
 
 	return err;
 }
 
-int spi_device_write(struct spi_device *dev, uint8_t *buf, size_t len)
+error_t i2c_device_read(struct i2c_device *dev, i2c_slave_adr_t addr, uint8_t *buf, size_t len)
 {
-	struct spi_controller *controller = dev->controller;
-	int err;
+	struct i2c_controller *controller = dev->controller;
+	error_t err = ERRNO_SUCCESS;
 
 	if (!dev || !dev->controller)
 		return -ERRNO_MISC_INVALID_ARG;
@@ -168,88 +158,7 @@ int spi_device_write(struct spi_device *dev, uint8_t *buf, size_t len)
 	if (err < 0)
 		return err;
 
-	err = controller->api.write(dev, buf, len);
-
-	mutex_unlock(&controller->lock);
-
-	return err;
-}
-
-int spi_device_write_only(struct spi_device *dev, uint8_t *buf, size_t len)
-{
-	struct spi_controller *controller = dev->controller;
-	int err;
-
-	if (!dev || !dev->controller)
-		return -ERRNO_MISC_INVALID_ARG;
-
-	err = mutex_lock(&controller->lock);
-
-	if (err < 0)
-		return err;
-
-	err = controller->api.write_only(dev, buf, len);
-
-	mutex_unlock(&controller->lock);
-
-	return err;
-}
-
-int spi_device_read(struct spi_device *dev, uint8_t *buf, size_t len)
-{
-	struct spi_controller *controller = dev->controller;
-	int err;
-
-	if (!dev || !dev->controller)
-		return -ERRNO_MISC_INVALID_ARG;
-
-	err = mutex_lock(&controller->lock);
-
-	if (err < 0)
-		return err;
-
-	err = controller->api.read(dev, buf, len);
-
-	mutex_unlock(&controller->lock);
-
-	return err;
-}
-
-int spi_device_read_only(struct spi_device *dev, uint8_t *buf, size_t len)
-{
-	struct spi_controller *controller = dev->controller;
-	int err;
-
-	if (!dev || !dev->controller)
-		return -ERRNO_MISC_INVALID_ARG;
-
-	err = mutex_lock(&controller->lock);
-
-	if (err < 0)
-		return err;
-
-	err = controller->api.read_only(dev, buf, len);
-
-	mutex_unlock(&controller->lock);
-
-	return err;
-}
-
-int spi_device_transfer(struct spi_device *dev, uint8_t *tx_buf, size_t tx_len, uint8_t *rx_buf,
-			size_t rx_len)
-{
-	struct spi_controller *controller = dev->controller;
-	int err;
-
-	if (!dev || !dev->controller)
-		return -ERRNO_MISC_INVALID_ARG;
-
-	err = mutex_lock(&controller->lock);
-
-	if (err < 0)
-		return err;
-
-	err = controller->api.transfer(dev, tx_buf, tx_len, rx_buf, rx_len);
+	err = controller->api.read(dev, addr, buf, len);
 
 	mutex_unlock(&controller->lock);
 
